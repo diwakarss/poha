@@ -1,0 +1,8 @@
+node_modules/
+dist/
+bun.lock
+*.tsbuildinfo
+.env
+.env.local
+.dev.vars
+.gstack/
