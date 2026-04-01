@@ -9,6 +9,7 @@
     "test": "bun test"
   },
   "dependencies": {
+    "@poha/sdk": "workspace:*",
     "@noble/ed25519": "^2.2.3"
   },
   "devDependencies": {
