@@ -8,9 +8,9 @@ async function makeSignedAttestation(overrides: Record<string, unknown> = {}) {
   const pubkey = await ed.getPublicKeyAsync(privkey);
   const pubkeyHex = Buffer.from(pubkey).toString("hex");
 
-  // Round current time to hour
+  // Round current time to hour (UTC, not local time)
   const now = new Date();
-  now.setMinutes(0, 0, 0);
+  now.setUTCMinutes(0, 0, 0);
 
   const base: Record<string, unknown> = {
     poha_version: "0.1",
@@ -100,7 +100,7 @@ describe("validateAttestation", () => {
 
   test("rejects expired timestamp (older than 24h)", async () => {
     const old = new Date(Date.now() - 48 * 60 * 60 * 1000);
-    old.setMinutes(0, 0, 0);
+    old.setUTCMinutes(0, 0, 0);
     const att = await makeSignedAttestation({ timestamp_hour: old.toISOString() });
     const result = await validateAttestation(att);
     expect(result.valid).toBe(false);
@@ -142,7 +142,7 @@ describe("validateAttestation", () => {
 
   test("rejects future timestamp", async () => {
     const future = new Date(Date.now() + 48 * 60 * 60 * 1000);
-    future.setMinutes(0, 0, 0);
+    future.setUTCMinutes(0, 0, 0);
     const att = await makeSignedAttestation({ timestamp_hour: future.toISOString() });
     const result = await validateAttestation(att);
     expect(result.valid).toBe(false);
@@ -155,5 +155,29 @@ describe("validateAttestation", () => {
     const result = await validateAttestation(att);
     expect(result.valid).toBe(false);
     expect(result.error).toContain("signature");
+  });
+
+  test("rejects non-string signer_pubkey (type confusion)", async () => {
+    const att = await makeSignedAttestation();
+    att.signer_pubkey = { toString: () => "ed25519:aa".repeat(32) };
+    const result = await validateAttestation(att);
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain("strings");
+  });
+
+  test("rejects non-string signature (type confusion)", async () => {
+    const att = await makeSignedAttestation();
+    att.signature = 12345;
+    const result = await validateAttestation(att);
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain("strings");
+  });
+
+  test("rejects non-string effort_band (type confusion)", async () => {
+    const att = await makeSignedAttestation();
+    att.effort_band = ["high"];
+    const result = await validateAttestation(att);
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain("strings");
   });
 });

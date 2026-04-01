@@ -105,6 +105,27 @@ describe("buildAttestation", () => {
     expect(keys).toEqual([...keys].sort());
   });
 
+  test("timestamp_hour is always rounded to UTC hour (no :30/:45 minutes)", async () => {
+    const att = await buildAttestation({
+      messageText: "timezone test",
+      effortScore: 0.5,
+      effortBand: "moderate",
+      compositionDurationMs: 1000,
+      inputMethod: "web_keyboard",
+      finalTextLength: 13,
+      signerPubkey: "ed25519:key",
+      signer: mockSigner,
+    });
+
+    // Must end in :00:00.000Z — never :30 or :45 from half-hour timezones
+    expect(att.timestamp_hour).toMatch(/T\d{2}:00:00\.000Z$/);
+    // Parse and verify minutes are exactly 0 in UTC
+    const ts = new Date(att.timestamp_hour);
+    expect(ts.getUTCMinutes()).toBe(0);
+    expect(ts.getUTCSeconds()).toBe(0);
+    expect(ts.getUTCMilliseconds()).toBe(0);
+  });
+
   test("different messages produce different content hashes", async () => {
     const att1 = await buildAttestation({
       messageText: "hello",

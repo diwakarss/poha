@@ -67,7 +67,15 @@ async function handleAttest(request: Request, env: Env): Promise<Response> {
   }
 
   // Validate attestation (structure, signature, timestamp, score/band)
-  const validation = await validateAttestation(att);
+  let validation;
+  try {
+    validation = await validateAttestation(att);
+  } catch {
+    return Response.json({ error: "invalid attestation structure" }, {
+      status: 400,
+      headers: corsHeaders(request),
+    });
+  }
   if (!validation.valid) {
     return Response.json({ error: validation.error }, {
       status: 400,
