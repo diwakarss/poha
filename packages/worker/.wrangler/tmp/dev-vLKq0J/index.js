@@ -884,6 +884,90 @@ function render404Page() {
 </html>`;
 }
 __name(render404Page, "render404Page");
+function renderLandingPage() {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PoHA &ndash; Proof of Human Attention</title>
+  <meta name="description" content="Badge your messages with proof of human attention. PoHA measures typing effort, not content.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline' https://api.fontshare.com; font-src https://cdn.fontshare.com; img-src 'none'; script-src 'none'">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <link rel="preconnect" href="https://api.fontshare.com">
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --text: #f0f0f0;
+      --text-dim: #9ca3af;
+      --border: #374151;
+      --green: #22c55e;
+      --font-display: 'Satoshi', system-ui, sans-serif;
+      --font-body: system-ui, -apple-system, sans-serif;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 16px;
+      text-align: center;
+      -webkit-font-smoothing: antialiased;
+    }
+    .hero-emoji { font-size: 64px; margin-bottom: 24px; }
+    h1 {
+      font-family: var(--font-display);
+      font-size: 40px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .tagline {
+      font-size: 16px;
+      color: var(--text-dim);
+      max-width: 420px;
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+    .cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      background: var(--green);
+      color: #0a0a0a;
+      border-radius: 6px;
+      font-size: 15px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: opacity 100ms;
+    }
+    .cta:hover { opacity: 0.9; }
+    .footer {
+      margin-top: 48px;
+      font-size: 13px;
+      color: var(--text-dim);
+    }
+    .footer a { color: var(--text-dim); text-decoration: underline; text-underline-offset: 2px; }
+  </style>
+</head>
+<body>
+  <div class="hero-emoji">\u270D\uFE0F</div>
+  <h1>Proof of Human Attention</h1>
+  <p class="tagline">Badge any message with proof that you typed it by hand. PoHA measures how text was entered &mdash; timing, pauses, revisions &mdash; never what was typed.</p>
+  <a class="cta" href="https://web.poha.ink">\u270D\uFE0F Start typing</a>
+  <div class="footer">
+    <a href="https://github.com/diwakarss/poha">GitHub</a>
+  </div>
+</body>
+</html>`;
+}
+__name(renderLandingPage, "renderLandingPage");
 function escapeHtml(str) {
   return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#x27;");
 }
@@ -980,6 +1064,7 @@ var RateLimiterDO = class {
 // src/index.ts
 var KV_TTL_SECONDS = 365 * 24 * 60 * 60;
 var MAX_COLLISION_RETRIES = 5;
+var SHORT_ID_PATTERN = /^\/([A-Za-z0-9]{5})$/;
 var src_default = {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -992,16 +1077,18 @@ var src_default = {
     if (request.method === "POST" && path === "/attest") {
       return handleAttest(request, env);
     }
-    const verifyMatch = path.match(/^\/v\/([A-Za-z0-9]{5})$/);
-    if (request.method === "GET" && verifyMatch) {
-      return handleVerify(verifyMatch[1], env, request);
-    }
     const apiMatch = path.match(/^\/api\/([A-Za-z0-9]{5})$/);
     if (request.method === "GET" && apiMatch) {
       return handleApi(apiMatch[1], env, request);
     }
     if (request.method === "GET" && path === "/") {
-      return Response.json({ service: "poha-worker", version: "0.1", status: "ok" });
+      return new Response(renderLandingPage(), {
+        headers: { "Content-Type": "text/html;charset=utf-8" }
+      });
+    }
+    const verifyMatch = path.match(SHORT_ID_PATTERN);
+    if (request.method === "GET" && verifyMatch) {
+      return handleVerify(verifyMatch[1], env, request);
     }
     return Response.json({ error: "not found" }, { status: 404 });
   }
@@ -1075,7 +1162,7 @@ async function handleAttest(request, env) {
   );
   return Response.json({
     short_id: shortId,
-    verify_url: `/v/${shortId}`,
+    verify_url: `/${shortId}`,
     remaining_today: rateCheck.remaining
   }, {
     status: 201,
@@ -1118,9 +1205,11 @@ async function handleApi(id, env, request) {
 }
 __name(handleApi, "handleApi");
 var ALLOWED_ORIGINS = [
+  "https://poha.ink",
+  "https://web.poha.ink",
+  "https://app.poha.ink",
   "https://poha.dev",
   "https://www.poha.dev",
-  "https://poha.ink",
   "https://www.poha.ink",
   "http://localhost:5173"
 ];
@@ -1177,7 +1266,7 @@ var jsonError = /* @__PURE__ */ __name(async (request, env, _ctx, middlewareCtx)
 }, "jsonError");
 var middleware_miniflare3_json_error_default = jsonError;
 
-// .wrangler/tmp/bundle-ExdqLU/middleware-insertion-facade.js
+// .wrangler/tmp/bundle-B79bqM/middleware-insertion-facade.js
 var __INTERNAL_WRANGLER_MIDDLEWARE__ = [
   middleware_ensure_req_body_drained_default,
   middleware_miniflare3_json_error_default
@@ -1209,7 +1298,7 @@ function __facade_invoke__(request, env, ctx, dispatch, finalMiddleware) {
 }
 __name(__facade_invoke__, "__facade_invoke__");
 
-// .wrangler/tmp/bundle-ExdqLU/middleware-loader.entry.ts
+// .wrangler/tmp/bundle-B79bqM/middleware-loader.entry.ts
 var __Facade_ScheduledController__ = class ___Facade_ScheduledController__ {
   constructor(scheduledTime, cron, noRetry) {
     this.scheduledTime = scheduledTime;

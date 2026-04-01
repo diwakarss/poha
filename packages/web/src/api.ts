@@ -2,7 +2,7 @@
  * API client for the PoHA worker.
  */
 
-export const API_BASE = import.meta.env.VITE_API_BASE || "https://api.poha.dev";
+export const API_BASE = import.meta.env.VITE_API_BASE || "https://poha.ink";
 
 export interface AttestResponse {
   short_id: string;
