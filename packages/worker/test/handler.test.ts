@@ -16,6 +16,18 @@ function createMockKV(): KVNamespace {
   } as unknown as KVNamespace;
 }
 
+/** Mock DurableObjectNamespace for rate limiting */
+function createMockRateLimiter(): DurableObjectNamespace {
+  return {
+    idFromName: (_name: string) => ({ toString: () => "mock-id" }),
+    get: (_id: any) => ({
+      fetch: async (_req: Request) => Response.json({ allowed: true, remaining: 99 }),
+    }),
+    newUniqueId: () => ({ toString: () => "mock-id" }),
+    jurisdiction: () => ({} as any),
+  } as unknown as DurableObjectNamespace;
+}
+
 function makeRequest(path: string, opts?: RequestInit & { origin?: string }): Request {
   const headers = new Headers(opts?.headers);
   if (opts?.origin) headers.set("Origin", opts.origin);
@@ -26,7 +38,7 @@ describe("worker handler", () => {
   let env: Env;
 
   beforeEach(() => {
-    env = { ATTESTATIONS: createMockKV() };
+    env = { ATTESTATIONS: createMockKV(), RATE_LIMITER: createMockRateLimiter() };
   });
 
   // --- Routing ---

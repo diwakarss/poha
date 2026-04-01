@@ -15,8 +15,9 @@ const BAND_THRESHOLDS = {
   high: [0.7, 1.0],
 } as const;
 
-/** Hex string to Uint8Array */
-function hexToBytes(hex: string): Uint8Array {
+/** Hex string to Uint8Array. Returns null if invalid. */
+function hexToBytes(hex: string): Uint8Array | null {
+  if (hex.length % 2 !== 0 || !/^[0-9a-f]+$/.test(hex)) return null;
   const bytes = new Uint8Array(hex.length / 2);
   for (let i = 0; i < bytes.length; i++) {
     bytes[i] = parseInt(hex.substring(i * 2, i * 2 + 2), 16);
@@ -105,6 +106,9 @@ export async function validateAttestation(att: Attestation): Promise<ValidationR
     return { valid: false, error: "invalid signer_pubkey format" };
   }
   const pubkeyBytes = hexToBytes(pubkeyMatch[1]);
+  if (!pubkeyBytes) {
+    return { valid: false, error: "invalid signer_pubkey hex encoding" };
+  }
 
   // Parse signature: "ed25519:<hex>"
   const sigMatch = signature.match(/^ed25519:([0-9a-f]+)$/);
@@ -112,6 +116,9 @@ export async function validateAttestation(att: Attestation): Promise<ValidationR
     return { valid: false, error: "invalid signature format" };
   }
   const sigBytes = hexToBytes(sigMatch[1]);
+  if (!sigBytes) {
+    return { valid: false, error: "invalid signature hex encoding" };
+  }
 
   try {
     const valid = await ed.verifyAsync(sigBytes, signingInput, pubkeyBytes);

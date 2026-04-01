@@ -4,6 +4,8 @@ import { generateShortId } from "./short-id.js";
 import { checkRateLimit, incrementRateLimit } from "./rate-limit.js";
 import { renderVerifyPage, render404Page } from "./verify-page.js";
 
+export { RateLimiterDO } from "./rate-limiter-do.js";
+
 const KV_TTL_SECONDS = 365 * 24 * 60 * 60; // 1 year
 const MAX_COLLISION_RETRIES = 5;
 

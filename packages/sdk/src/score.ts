@@ -36,7 +36,7 @@ export function computeScore(
     duration: normalizeLinear(raw.durationMs, config.duration.min, config.duration.max),
     entropy: normalizeLinear(raw.entropy, config.entropy.min, config.entropy.max),
     // Paste ratio is inverted: 0 paste = 1.0 score, all paste = 0.0 score
-    pasteRatio: 1.0 - raw.pasteRatio,
+    pasteRatio: 1.0 - normalizeLinear(raw.pasteRatio, config.pasteRatio.min, config.pasteRatio.max),
     revisionRate: normalizeLinear(raw.revisionRate, config.revisionRate.min, config.revisionRate.max),
     eventDensity: normalizeLinear(raw.eventDensity, config.eventDensity.min, config.eventDensity.max),
   };
