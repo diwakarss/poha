@@ -22,10 +22,11 @@ interface SuccessData {
   verifyUrl: string;
 }
 
+const SCORE_DEBOUNCE_MS = 300;
+
 const App: FunctionComponent = () => {
   const [state, setState] = useState<AppState>("composing");
   const [text, setText] = useState("");
-  const [events, setEvents] = useState<InputEvent[]>([]);
   const [score, setScore] = useState(0);
   const [band, setBand] = useState<EffortBand>("none");
   const [successData, setSuccessData] = useState<SuccessData | null>(null);
@@ -33,21 +34,12 @@ const App: FunctionComponent = () => {
   const [showBanner, setShowBanner] = useState(() => !localStorage.getItem("poha_banner_dismissed"));
   const [copied, setCopied] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const eventsRef = useRef<InputEvent[]>([]);
+  const scoreTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Attach collector
-  useEffect(() => {
-    const ta = textareaRef.current;
-    if (!ta) return;
-
-    const cleanup = attachCollector(ta, (event) => {
-      setEvents((prev) => [...prev, event]);
-    });
-
-    return cleanup;
-  }, []);
-
-  // Recompute score on events change
-  useEffect(() => {
+  // Debounced score recalculation
+  const recalcScore = useCallback(() => {
+    const events = eventsRef.current;
     if (events.length < 2) {
       setScore(0);
       setBand("none");
@@ -57,7 +49,24 @@ const App: FunctionComponent = () => {
     const result = computeScore(raw);
     setScore(result.score);
     setBand(result.band);
-  }, [events]);
+  }, []);
+
+  // Attach collector — push to ref, debounce score update
+  useEffect(() => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+
+    const cleanup = attachCollector(ta, (event) => {
+      eventsRef.current.push(event);
+      if (scoreTimerRef.current) clearTimeout(scoreTimerRef.current);
+      scoreTimerRef.current = setTimeout(recalcScore, SCORE_DEBOUNCE_MS);
+    });
+
+    return () => {
+      cleanup();
+      if (scoreTimerRef.current) clearTimeout(scoreTimerRef.current);
+    };
+  }, [recalcScore]);
 
   const isReady = score >= BADGE_READY_THRESHOLD && text.trim().length > 0;
 
@@ -69,7 +78,7 @@ const App: FunctionComponent = () => {
     try {
       const kp = await getKeyPair();
       const hash = await contentHash(text);
-      const raw = extractSignals(events);
+      const raw = extractSignals(eventsRef.current);
       const result = computeScore(raw);
 
       const now = new Date();
@@ -110,11 +119,11 @@ const App: FunctionComponent = () => {
       // Auto-recover to composing after 3 seconds
       setTimeout(() => setState("composing"), 3000);
     }
-  }, [isReady, state, text, events]);
+  }, [isReady, state, text]);
 
   const handleReset = useCallback(() => {
     setText("");
-    setEvents([]);
+    eventsRef.current = [];
     setScore(0);
     setBand("none");
     setSuccessData(null);

@@ -15,7 +15,7 @@ export default {
     // CORS headers for API endpoints
     if (request.method === "OPTIONS") {
       return new Response(null, {
-        headers: corsHeaders(),
+        headers: corsHeaders(request),
       });
     }
 
@@ -27,13 +27,13 @@ export default {
     // GET /v/:id — verification page (HTML)
     const verifyMatch = path.match(/^\/v\/([A-Za-z0-9]{5})$/);
     if (request.method === "GET" && verifyMatch) {
-      return handleVerify(verifyMatch[1], env);
+      return handleVerify(verifyMatch[1], env, request);
     }
 
     // GET /api/:id — raw attestation JSON
     const apiMatch = path.match(/^\/api\/([A-Za-z0-9]{5})$/);
     if (request.method === "GET" && apiMatch) {
-      return handleApi(apiMatch[1], env);
+      return handleApi(apiMatch[1], env, request);
     }
 
     // GET / — health check
@@ -53,7 +53,7 @@ async function handleAttest(request: Request, env: Env): Promise<Response> {
   } catch {
     return Response.json({ error: "invalid JSON body" }, {
       status: 400,
-      headers: corsHeaders(),
+      headers: corsHeaders(request),
     });
   }
 
@@ -62,7 +62,7 @@ async function handleAttest(request: Request, env: Env): Promise<Response> {
   if (!validation.valid) {
     return Response.json({ error: validation.error }, {
       status: 400,
-      headers: corsHeaders(),
+      headers: corsHeaders(request),
     });
   }
 
@@ -72,7 +72,7 @@ async function handleAttest(request: Request, env: Env): Promise<Response> {
     return Response.json({ error: "rate limit exceeded (100/day per key)" }, {
       status: 429,
       headers: {
-        ...corsHeaders(),
+        ...corsHeaders(request),
         "Retry-After": "86400",
       },
     });
@@ -91,7 +91,7 @@ async function handleAttest(request: Request, env: Env): Promise<Response> {
   if (!shortId) {
     return Response.json({ error: "failed to generate unique ID, please retry" }, {
       status: 500,
-      headers: corsHeaders(),
+      headers: corsHeaders(request),
     });
   }
 
@@ -117,11 +117,11 @@ async function handleAttest(request: Request, env: Env): Promise<Response> {
     remaining_today: rateCheck.remaining,
   }, {
     status: 201,
-    headers: corsHeaders(),
+    headers: corsHeaders(request),
   });
 }
 
-async function handleVerify(id: string, env: Env): Promise<Response> {
+async function handleVerify(id: string, env: Env, request: Request): Promise<Response> {
   const data = await env.ATTESTATIONS.get(`att:${id}`);
   if (!data) {
     return new Response(render404Page(), {
@@ -139,28 +139,38 @@ async function handleVerify(id: string, env: Env): Promise<Response> {
   });
 }
 
-async function handleApi(id: string, env: Env): Promise<Response> {
+async function handleApi(id: string, env: Env, request: Request): Promise<Response> {
   const data = await env.ATTESTATIONS.get(`att:${id}`);
   if (!data) {
     return Response.json({ error: "not found" }, {
       status: 404,
-      headers: corsHeaders(),
+      headers: corsHeaders(request),
     });
   }
 
   const stored: StoredAttestation = JSON.parse(data);
   return Response.json(stored, {
     headers: {
-      ...corsHeaders(),
+      ...corsHeaders(request),
       "Cache-Control": "public, max-age=3600",
     },
   });
 }
 
-function corsHeaders(): Record<string, string> {
+const ALLOWED_ORIGINS = [
+  "https://poha.dev",
+  "https://www.poha.dev",
+  "https://poha.ink",
+  "https://www.poha.ink",
+];
+
+function corsHeaders(request?: Request): Record<string, string> {
+  const origin = request?.headers.get("Origin") ?? "";
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
   return {
-    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Origin": allowedOrigin,
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
+    "Vary": "Origin",
   };
 }
