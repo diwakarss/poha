@@ -1,20 +1,11 @@
+import type { Attestation } from "@poha/sdk";
+
+export type { Attestation };
+
 /** KV namespace binding for attestation storage */
 export interface Env {
   ATTESTATIONS: KVNamespace;
-}
-
-/** Attestation as received from the client SDK */
-export interface Attestation {
-  poha_version: string;
-  content_hash: string;
-  effort_score: number;
-  effort_band: "none" | "low" | "moderate" | "high";
-  composition_duration_ms: number;
-  input_method: "web_keyboard" | "accessibility_observed" | "compose_in_app";
-  final_text_length: number;
-  timestamp_hour: string;
-  signer_pubkey: string;
-  signature: string;
+  RATE_LIMITER: DurableObjectNamespace;
 }
 
 /** Stored attestation in KV (attestation + metadata) */
