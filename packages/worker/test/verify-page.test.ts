@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { renderVerifyPage, render404Page, renderLandingPage } from "../src/verify-page.js";
+import { renderVerifyPage, render404Page } from "../src/verify-page.js";
+import { renderLandingPage } from "../src/landing-page.js";
 import type { StoredAttestation } from "../src/types.js";
 
 describe("renderVerifyPage", () => {
@@ -143,7 +144,7 @@ describe("renderLandingPage", () => {
     const html = renderLandingPage();
     expect(html).toContain("<!DOCTYPE html>");
     expect(html).toContain("Proof of Human Attention");
-    expect(html).toContain("Start typing");
+    expect(html).toContain("PROVE YOU");
   });
 
   test("links to web.poha.ink", () => {
@@ -151,8 +152,9 @@ describe("renderLandingPage", () => {
     expect(html).toContain("web.poha.ink");
   });
 
-  test("includes CSP", () => {
+  test("includes OG meta tags", () => {
     const html = renderLandingPage();
-    expect(html).toContain("Content-Security-Policy");
+    expect(html).toContain("og:title");
+    expect(html).toContain("og:description");
   });
 });

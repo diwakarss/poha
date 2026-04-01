@@ -31,11 +31,17 @@ function createMockRateLimiter(): DurableObjectNamespace {
   } as unknown as DurableObjectNamespace;
 }
 
-function makeRequest(path: string, opts?: RequestInit & { origin?: string }): Request {
+function makeRequest(path: string, opts?: RequestInit & { origin?: string; referer?: string }): Request {
   const headers = new Headers(opts?.headers);
   if (opts?.origin) headers.set("Origin", opts.origin);
+  if (opts?.referer) headers.set("Referer", opts.referer);
   return new Request(`https://poha.ink${path}`, { ...opts, headers });
 }
+
+const mockCtx: ExecutionContext = {
+  waitUntil: (_p: Promise<any>) => {},
+  passThroughOnException: () => {},
+} as ExecutionContext;
 
 describe("worker handler", () => {
   let env: Env;
@@ -47,21 +53,21 @@ describe("worker handler", () => {
   // --- Routing ---
 
   test("GET / returns landing page HTML", async () => {
-    const res = await worker.fetch(makeRequest("/"), env);
+    const res = await worker.fetch(makeRequest("/"), env, mockCtx);
     expect(res.status).toBe(200);
     expect(res.headers.get("Content-Type")).toContain("text/html");
     const html = await res.text();
     expect(html).toContain("Proof of Human Attention");
-    expect(html).toContain("Start typing");
+    expect(html).toContain("PROVE YOU");
   });
 
   test("unknown route returns 404", async () => {
-    const res = await worker.fetch(makeRequest("/unknown"), env);
+    const res = await worker.fetch(makeRequest("/unknown"), env, mockCtx);
     expect(res.status).toBe(404);
   });
 
   test("OPTIONS returns CORS preflight", async () => {
-    const res = await worker.fetch(makeRequest("/attest", { method: "OPTIONS" }), env);
+    const res = await worker.fetch(makeRequest("/attest", { method: "OPTIONS" }), env, mockCtx);
     expect(res.status).toBe(200);
     expect(res.headers.get("Access-Control-Allow-Methods")).toContain("POST");
   });
@@ -71,7 +77,7 @@ describe("worker handler", () => {
   test("CORS allows poha.ink origin", async () => {
     const res = await worker.fetch(
       makeRequest("/attest", { method: "OPTIONS", origin: "https://poha.ink" }),
-      env
+      env, mockCtx
     );
     expect(res.headers.get("Access-Control-Allow-Origin")).toBe("https://poha.ink");
   });
@@ -79,7 +85,7 @@ describe("worker handler", () => {
   test("CORS allows web.poha.ink origin", async () => {
     const res = await worker.fetch(
       makeRequest("/attest", { method: "OPTIONS", origin: "https://web.poha.ink" }),
-      env
+      env, mockCtx
     );
     expect(res.headers.get("Access-Control-Allow-Origin")).toBe("https://web.poha.ink");
   });
@@ -87,7 +93,7 @@ describe("worker handler", () => {
   test("CORS allows localhost:5173 for dev", async () => {
     const res = await worker.fetch(
       makeRequest("/attest", { method: "OPTIONS", origin: "http://localhost:5173" }),
-      env
+      env, mockCtx
     );
     expect(res.headers.get("Access-Control-Allow-Origin")).toBe("http://localhost:5173");
   });
@@ -95,7 +101,7 @@ describe("worker handler", () => {
   test("CORS defaults for unknown origin", async () => {
     const res = await worker.fetch(
       makeRequest("/attest", { method: "OPTIONS", origin: "https://evil.com" }),
-      env
+      env, mockCtx
     );
     expect(res.headers.get("Access-Control-Allow-Origin")).toBe("https://poha.ink");
   });
@@ -109,7 +115,7 @@ describe("worker handler", () => {
         body: "not json",
         headers: { "Content-Type": "application/json" },
       }),
-      env
+      env, mockCtx
     );
     expect(res.status).toBe(400);
     const body = await res.json() as any;
@@ -123,7 +129,7 @@ describe("worker handler", () => {
         body: JSON.stringify({ poha_version: "999" }),
         headers: { "Content-Type": "application/json" },
       }),
-      env
+      env, mockCtx
     );
     expect(res.status).toBe(400);
     const body = await res.json() as any;
@@ -151,7 +157,7 @@ describe("worker handler", () => {
         body: JSON.stringify(att),
         headers: { "Content-Type": "application/json" },
       }),
-      env
+      env, mockCtx
     );
     expect(res.status).toBe(201);
     const body = await res.json() as any;
@@ -162,7 +168,7 @@ describe("worker handler", () => {
   // --- GET /:id (verification page, no /v/ prefix) ---
 
   test("GET /:id returns 404 for missing badge", async () => {
-    const res = await worker.fetch(makeRequest("/aBcDe"), env);
+    const res = await worker.fetch(makeRequest("/aBcDe"), env, mockCtx);
     expect(res.status).toBe(404);
     expect(res.headers.get("Content-Type")).toContain("text/html");
   });
@@ -186,7 +192,7 @@ describe("worker handler", () => {
     };
     await env.ATTESTATIONS.put("att:aBcDe", JSON.stringify(stored));
 
-    const res = await worker.fetch(makeRequest("/aBcDe"), env);
+    const res = await worker.fetch(makeRequest("/aBcDe"), env, mockCtx);
     expect(res.status).toBe(200);
     expect(res.headers.get("Content-Type")).toContain("text/html");
     const html = await res.text();
@@ -197,7 +203,7 @@ describe("worker handler", () => {
   // --- GET /api/:id ---
 
   test("GET /api/:id returns 404 for missing badge", async () => {
-    const res = await worker.fetch(makeRequest("/api/xYzWq"), env);
+    const res = await worker.fetch(makeRequest("/api/xYzWq"), env, mockCtx);
     expect(res.status).toBe(404);
   });
 
@@ -220,7 +226,7 @@ describe("worker handler", () => {
     };
     await env.ATTESTATIONS.put("att:xYzWq", JSON.stringify(stored));
 
-    const res = await worker.fetch(makeRequest("/api/xYzWq"), env);
+    const res = await worker.fetch(makeRequest("/api/xYzWq"), env, mockCtx);
     expect(res.status).toBe(200);
     const body = await res.json() as any;
     expect(body.short_id).toBe("xYzWq");
@@ -259,7 +265,7 @@ describe("worker handler", () => {
         body: JSON.stringify(att),
         headers: { "Content-Type": "application/json" },
       }),
-      collisionEnv
+      collisionEnv, mockCtx
     );
     expect(res.status).toBe(500);
     const body = await res.json() as any;
@@ -270,22 +276,22 @@ describe("worker handler", () => {
 
   test("short ID must be exactly 5 alphanumeric chars", async () => {
     // Too short
-    const res1 = await worker.fetch(makeRequest("/aBc"), env);
+    const res1 = await worker.fetch(makeRequest("/aBc"), env, mockCtx);
     expect(res1.status).toBe(404);
 
     // Too long
-    const res2 = await worker.fetch(makeRequest("/aBcDeF"), env);
+    const res2 = await worker.fetch(makeRequest("/aBcDeF"), env, mockCtx);
     expect(res2.status).toBe(404);
 
     // Special chars
-    const res3 = await worker.fetch(makeRequest("/ab-de"), env);
+    const res3 = await worker.fetch(makeRequest("/ab-de"), env, mockCtx);
     expect(res3.status).toBe(404);
   });
 
   // --- Reserved routes don't collide with short IDs ---
 
   test("/attest is not matched as a short ID", async () => {
-    const res = await worker.fetch(makeRequest("/attest"), env);
+    const res = await worker.fetch(makeRequest("/attest"), env, mockCtx);
     // GET /attest should 404 (not matched as verify page since "attest" is 6 chars)
     expect(res.status).toBe(404);
   });
