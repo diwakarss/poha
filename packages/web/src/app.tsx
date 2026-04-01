@@ -104,7 +104,7 @@ const App: FunctionComponent = () => {
       });
 
       const response = await submitAttestation(attestation);
-      const verifyUrl = `${API_BASE}${response.verify_url}`;
+      const verifyUrl = `${API_BASE}/${response.short_id}`;
       const badgeUrl = `${BADGE_DOMAIN}/${response.short_id}`;
       setSuccessData({
         shortId: response.short_id,

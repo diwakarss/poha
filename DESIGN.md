@@ -1,7 +1,7 @@
-# Design System — PoHA (Proof of Human Authorship)
+# Design System — PoHA (Proof of Human Attention)
 
 ## Product Context
-- **What this is:** Badge any message with a verification link that proves human authorship through typing behavior metadata. One line (`✍️ poha.ink/a3x9f`), no app needed on the receiving end.
+- **What this is:** Badge any message with a verification link that proves human attention through typing behavior metadata. One line (`✍️ poha.ink/a3x9f`), no app needed on the receiving end.
 - **Who it's for:** People who want to prove they typed something themselves, not AI-generated. Messaging-heavy users.
 - **Space/industry:** Trust/verification, anti-AI-content provenance. Peers: SSL certificate pages, identity verification UIs, blockchain explorers.
 - **Project type:** Web app (compose page) + static verification page + Android app.
@@ -154,7 +154,7 @@ No other animations. If it's not on this list, it doesn't animate.
 
 ## Voice & Copy Guidelines
 - **Tone:** Calm, factual, trustworthy. Not techy, not playful, not corporate. Like a notary explaining what they do.
-- **Hero text:** "Typed by hand" (not "Verified by PoHA", not "Human-authored content").
+- **Hero text:** "Typed by hand" (not "Verified by PoHA", not "Human-authored content", not "Proof of Human Authorship").
 - **Effort indicators:** Simple present tense. "Start typing", "Building effort...", "Ready to badge".
 - **Error messages:** State what happened + what to do. "Could not create badge. Check your connection." Not "Oops!" or "Something went wrong!"
 - **Explainer copy:** Third person, passive voice is OK for trust language. "The author's keystrokes were analyzed..." not "We analyzed your keystrokes..."
