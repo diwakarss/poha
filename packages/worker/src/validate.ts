@@ -1,4 +1,5 @@
 import * as ed from "@noble/ed25519";
+import { canonicalJSON } from "@poha/sdk";
 import type { Attestation } from "./types.js";
 
 const VALID_BANDS = ["none", "low", "moderate", "high"] as const;
@@ -13,23 +14,6 @@ const BAND_THRESHOLDS = {
   moderate: [0.4, 0.7],
   high: [0.7, 1.0],
 } as const;
-
-/**
- * Canonical JSON: sorted keys, no whitespace.
- * Must match the SDK's canonicalJSON() exactly.
- */
-function canonicalJSON(obj: Record<string, unknown>): string {
-  return JSON.stringify(obj, (_key, value) => {
-    if (value !== null && typeof value === "object" && !Array.isArray(value)) {
-      const sorted: Record<string, unknown> = {};
-      for (const k of Object.keys(value as Record<string, unknown>).sort()) {
-        sorted[k] = (value as Record<string, unknown>)[k];
-      }
-      return sorted;
-    }
-    return value;
-  });
-}
 
 /** Hex string to Uint8Array */
 function hexToBytes(hex: string): Uint8Array {
