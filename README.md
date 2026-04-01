@@ -1,6 +1,6 @@
 # PoHA — Proof of Human Attention
 
-A badge that proves you typed a message yourself.
+AI writes like you now. This badge shows when you wrote it yourself.
 
 ```
 Spent the morning debugging a race condition that
