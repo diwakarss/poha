@@ -34,7 +34,7 @@ function createMockRateLimiter(): DurableObjectNamespace {
 function makeRequest(path: string, opts?: RequestInit & { origin?: string }): Request {
   const headers = new Headers(opts?.headers);
   if (opts?.origin) headers.set("Origin", opts.origin);
-  return new Request(`https://api.poha.dev${path}`, { ...opts, headers });
+  return new Request(`https://poha.ink${path}`, { ...opts, headers });
 }
 
 describe("worker handler", () => {
@@ -46,12 +46,13 @@ describe("worker handler", () => {
 
   // --- Routing ---
 
-  test("GET / returns health check", async () => {
+  test("GET / returns landing page HTML", async () => {
     const res = await worker.fetch(makeRequest("/"), env);
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
-    expect(body.service).toBe("poha-worker");
-    expect(body.status).toBe("ok");
+    expect(res.headers.get("Content-Type")).toContain("text/html");
+    const html = await res.text();
+    expect(html).toContain("Proof of Human Attention");
+    expect(html).toContain("Start typing");
   });
 
   test("unknown route returns 404", async () => {
@@ -67,29 +68,36 @@ describe("worker handler", () => {
 
   // --- CORS ---
 
-  test("CORS allows poha.dev origin", async () => {
+  test("CORS allows poha.ink origin", async () => {
     const res = await worker.fetch(
-      makeRequest("/", { origin: "https://poha.dev" }),
+      makeRequest("/attest", { method: "OPTIONS", origin: "https://poha.ink" }),
       env
     );
-    expect(res.headers.get("Access-Control-Allow-Origin")).toBeNull(); // health check doesn't set CORS
+    expect(res.headers.get("Access-Control-Allow-Origin")).toBe("https://poha.ink");
   });
 
-  test("CORS on OPTIONS reflects allowed origin", async () => {
+  test("CORS allows web.poha.ink origin", async () => {
     const res = await worker.fetch(
-      makeRequest("/attest", { method: "OPTIONS", origin: "https://poha.dev" }),
+      makeRequest("/attest", { method: "OPTIONS", origin: "https://web.poha.ink" }),
       env
     );
-    expect(res.headers.get("Access-Control-Allow-Origin")).toBe("https://poha.dev");
+    expect(res.headers.get("Access-Control-Allow-Origin")).toBe("https://web.poha.ink");
   });
 
-  test("CORS on OPTIONS defaults for unknown origin", async () => {
+  test("CORS allows localhost:5173 for dev", async () => {
+    const res = await worker.fetch(
+      makeRequest("/attest", { method: "OPTIONS", origin: "http://localhost:5173" }),
+      env
+    );
+    expect(res.headers.get("Access-Control-Allow-Origin")).toBe("http://localhost:5173");
+  });
+
+  test("CORS defaults for unknown origin", async () => {
     const res = await worker.fetch(
       makeRequest("/attest", { method: "OPTIONS", origin: "https://evil.com" }),
       env
     );
-    // Should default to first allowed origin, not reflect evil.com
-    expect(res.headers.get("Access-Control-Allow-Origin")).toBe("https://poha.dev");
+    expect(res.headers.get("Access-Control-Allow-Origin")).toBe("https://poha.ink");
   });
 
   // --- POST /attest ---
@@ -122,15 +130,44 @@ describe("worker handler", () => {
     expect(body.error).toBeDefined();
   });
 
-  // --- GET /v/:id ---
+  test("POST /attest returns verify_url without /v/ prefix", async () => {
+    const privKey = ed.utils.randomPrivateKey();
+    const pubKey = await ed.getPublicKeyAsync(privKey);
+    const pubHex = bytesToHex(pubKey);
+    const att = await buildAttestation({
+      messageText: "url format test",
+      effortScore: 0.82,
+      effortBand: "high",
+      compositionDurationMs: 45000,
+      inputMethod: "web_keyboard",
+      finalTextLength: 15,
+      signerPubkey: `ed25519:${pubHex}`,
+      signer: (bytes) => ed.signAsync(bytes, privKey),
+    });
 
-  test("GET /v/:id returns 404 for missing badge", async () => {
-    const res = await worker.fetch(makeRequest("/v/aBcDe"), env);
+    const res = await worker.fetch(
+      makeRequest("/attest", {
+        method: "POST",
+        body: JSON.stringify(att),
+        headers: { "Content-Type": "application/json" },
+      }),
+      env
+    );
+    expect(res.status).toBe(201);
+    const body = await res.json() as any;
+    expect(body.verify_url).toMatch(/^\/[A-Za-z0-9]{5}$/);
+    expect(body.verify_url).not.toContain("/v/");
+  });
+
+  // --- GET /:id (verification page, no /v/ prefix) ---
+
+  test("GET /:id returns 404 for missing badge", async () => {
+    const res = await worker.fetch(makeRequest("/aBcDe"), env);
     expect(res.status).toBe(404);
     expect(res.headers.get("Content-Type")).toContain("text/html");
   });
 
-  test("GET /v/:id returns verification page for existing badge", async () => {
+  test("GET /:id returns verification page for existing badge", async () => {
     const stored: StoredAttestation = {
       attestation: {
         poha_version: "0.1",
@@ -149,7 +186,7 @@ describe("worker handler", () => {
     };
     await env.ATTESTATIONS.put("att:aBcDe", JSON.stringify(stored));
 
-    const res = await worker.fetch(makeRequest("/v/aBcDe"), env);
+    const res = await worker.fetch(makeRequest("/aBcDe"), env);
     expect(res.status).toBe(200);
     expect(res.headers.get("Content-Type")).toContain("text/html");
     const html = await res.text();
@@ -193,7 +230,6 @@ describe("worker handler", () => {
   // --- Collision retry exhaustion ---
 
   test("POST /attest returns 500 when all short ID retries collide", async () => {
-    // KV that always returns existing data on get (simulates full collision)
     const alwaysCollideKV = {
       get: async (_key: string) => "existing",
       put: async () => {},
@@ -203,7 +239,6 @@ describe("worker handler", () => {
     } as unknown as KVNamespace;
     const collisionEnv: Env = { ATTESTATIONS: alwaysCollideKV, RATE_LIMITER: env.RATE_LIMITER };
 
-    // Build a valid signed attestation to pass validation
     const privKey = ed.utils.randomPrivateKey();
     const pubKey = await ed.getPublicKeyAsync(privKey);
     const pubHex = bytesToHex(pubKey);
@@ -235,15 +270,23 @@ describe("worker handler", () => {
 
   test("short ID must be exactly 5 alphanumeric chars", async () => {
     // Too short
-    const res1 = await worker.fetch(makeRequest("/v/aBc"), env);
+    const res1 = await worker.fetch(makeRequest("/aBc"), env);
     expect(res1.status).toBe(404);
 
     // Too long
-    const res2 = await worker.fetch(makeRequest("/v/aBcDeF"), env);
+    const res2 = await worker.fetch(makeRequest("/aBcDeF"), env);
     expect(res2.status).toBe(404);
 
     // Special chars
-    const res3 = await worker.fetch(makeRequest("/v/ab-de"), env);
+    const res3 = await worker.fetch(makeRequest("/ab-de"), env);
     expect(res3.status).toBe(404);
+  });
+
+  // --- Reserved routes don't collide with short IDs ---
+
+  test("/attest is not matched as a short ID", async () => {
+    const res = await worker.fetch(makeRequest("/attest"), env);
+    // GET /attest should 404 (not matched as verify page since "attest" is 6 chars)
+    expect(res.status).toBe(404);
   });
 });

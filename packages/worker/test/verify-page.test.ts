@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { renderVerifyPage, render404Page } from "../src/verify-page.js";
+import { renderVerifyPage, render404Page, renderLandingPage } from "../src/verify-page.js";
 import type { StoredAttestation } from "../src/types.js";
 
 describe("renderVerifyPage", () => {
@@ -135,5 +135,24 @@ describe("render404Page", () => {
     const html = render404Page();
     expect(html).toContain("Content-Security-Policy");
     expect(html).toContain("X-Content-Type-Options");
+  });
+});
+
+describe("renderLandingPage", () => {
+  test("renders valid HTML with branding", () => {
+    const html = renderLandingPage();
+    expect(html).toContain("<!DOCTYPE html>");
+    expect(html).toContain("Proof of Human Attention");
+    expect(html).toContain("Start typing");
+  });
+
+  test("links to web.poha.ink", () => {
+    const html = renderLandingPage();
+    expect(html).toContain("web.poha.ink");
+  });
+
+  test("includes CSP", () => {
+    const html = renderLandingPage();
+    expect(html).toContain("Content-Security-Policy");
   });
 });

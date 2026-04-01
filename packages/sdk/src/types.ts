@@ -42,7 +42,7 @@ export interface SignalConfig {
 
 /** Default v1 signal weights and normalization ranges */
 export const DEFAULT_SIGNAL_CONFIG: Record<string, SignalConfig> = {
-  duration: { weight: 0.20, min: 3_000, max: 60_000 },
+  duration: { weight: 0.20, min: 3_000, max: 180_000 },
   entropy: { weight: 0.25, min: 0.5, max: 3.5 },
   pasteRatio: { weight: 0.20, min: 0, max: 1 },
   revisionRate: { weight: 0.20, min: 0, max: 10 },
