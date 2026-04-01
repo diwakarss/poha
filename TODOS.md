@@ -16,18 +16,18 @@
 - [x] **T-2: Add tests for worker/index.ts** — 13 tests for routing, CORS, API endpoints.
 - [x] **P-1+P-2: Debounce score recalculation** — Mutable ref + 300ms debounce.
 
-### P2 — Before scale
+### P2 — Before scale (DONE)
 
-- [ ] **A-4: Durable Objects for atomic rate limiting** — KV check-then-increment is non-atomic. Concurrent requests can bypass the 100/day limit.
-- [ ] **T-3: Basic web package tests** — collector.ts and keys.ts have testable logic. Zero coverage currently.
-- [ ] **CQ-2: Import Attestation type from SDK in Worker** — Duplicated type definition risks silent drift.
+- [x] **A-4: Durable Objects for atomic rate limiting** — RateLimiterDO class, one DO per pubkey.
+- [x] **T-3: Basic web package tests** — 10 tests for collector logic and API client.
+- [x] **CQ-2: Import Attestation type from SDK in Worker** — Single source of truth.
 
-### P3 — Nice to have
+### P3 — Nice to have (DONE)
 
-- [ ] **CQ-4: Remove unsafe-inline from CSP style-src** — Move to hashed/nonced styles.
-- [ ] **CQ-5: Normalize pasteRatio through normalizeLinear** — Inconsistency with other signals.
-- [ ] **CQ-8: Validate hex string length in hexToBytes** — Odd-length hex silently produces garbage.
-- [ ] **T-4: Score/band boundary tests** — Verify SDK and Worker agree at exactly 0.1, 0.4, 0.7.
+- [x] **CQ-4: Remove unsafe-inline from CSP style-src** — Now `style-src 'self'` only.
+- [x] **CQ-5: Normalize pasteRatio through normalizeLinear** — Consistent with other signals.
+- [x] **CQ-8: Validate hex string length in hexToBytes** — Returns null on invalid input.
+- [x] **T-4: Score/band boundary tests** — 17 tests at all thresholds + SDK↔Worker consistency.
 
 ## v2: Multi-device / key migration
 **What:** When a user gets a new phone or clears browser data, their Ed25519 keypair is lost. Future badges come from a new key with no link to previous identity. Need a key linking / migration mechanism so users don't lose their badge history when switching devices.
