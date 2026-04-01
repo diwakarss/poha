@@ -2,19 +2,19 @@
 
 ## Eng Review Findings (2026-04-01)
 
-### P0 — Fix now
+### P0 — Fix now (DONE)
 
-- [ ] **A-1: Wire @poha/sdk as dependency in web app** — Remove 135 inlined lines from `app.tsx`, import from SDK package. Prevents drift between SDK and web scoring logic.
-- [ ] **A-2: Share canonicalJSON between SDK and Worker** — Worker `validate.ts` has a duplicated canonical JSON implementation. Import from `@poha/sdk` instead.
-- [ ] **CQ-1: Fix modulo bias in short-id.ts** — `bytes[i] % 62` favors first 8 characters by ~3.2%. Use rejection sampling.
-- [ ] **T-5: Cross-package integration test** — SDK builds attestation → Worker validates it. Round-trip test catches canonical JSON drift.
+- [x] **A-1: Wire @poha/sdk as dependency in web app** — Removed 135 inlined lines from `app.tsx`.
+- [x] **A-2: Share canonicalJSON between SDK and Worker** — Worker imports from `@poha/sdk`.
+- [x] **CQ-1: Fix modulo bias in short-id.ts** — Rejection sampling for uniform distribution.
+- [x] **T-5: Cross-package integration test** — 6 round-trip tests (SDK build → Worker validate).
 
-### P1 — Before shipping to real users
+### P1 — Before shipping to real users (DONE)
 
-- [ ] **A-3: Lock CORS to poha.dev / poha.ink** — Current wildcard `*` allows any site to POST attestations.
-- [ ] **T-1: Add tests for rate-limit.ts** — Security boundary with zero test coverage.
-- [ ] **T-2: Add tests for worker/index.ts** — No routing, CORS, or integration tests for the main handler.
-- [ ] **P-1+P-2: Debounce score recalculation** — Events array copied O(n) per keystroke + score recomputed every keystroke. Use ref + debounce.
+- [x] **A-3: Lock CORS to poha.dev / poha.ink** — Origin-aware CORS with Vary header.
+- [x] **T-1: Add tests for rate-limit.ts** — 5 tests covering limits, independence, TTL.
+- [x] **T-2: Add tests for worker/index.ts** — 13 tests for routing, CORS, API endpoints.
+- [x] **P-1+P-2: Debounce score recalculation** — Mutable ref + 300ms debounce.
 
 ### P2 — Before scale
 
