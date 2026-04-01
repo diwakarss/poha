@@ -88,11 +88,11 @@ export async function validateAttestation(att: Attestation): Promise<ValidationR
   }
 
   // 9. Positive duration and text length
-  if (typeof att.composition_duration_ms !== "number" || att.composition_duration_ms < 0) {
-    return { valid: false, error: "composition_duration_ms must be non-negative" };
+  if (typeof att.composition_duration_ms !== "number" || att.composition_duration_ms < 0 || att.composition_duration_ms > 86_400_000) {
+    return { valid: false, error: "composition_duration_ms must be 0 to 86400000" };
   }
-  if (typeof att.final_text_length !== "number" || att.final_text_length < 0) {
-    return { valid: false, error: "final_text_length must be non-negative" };
+  if (typeof att.final_text_length !== "number" || att.final_text_length < 0 || att.final_text_length > 100_000) {
+    return { valid: false, error: "final_text_length must be 0 to 100000" };
   }
 
   // 10. Signature verification
@@ -105,6 +105,9 @@ export async function validateAttestation(att: Attestation): Promise<ValidationR
   if (!pubkeyMatch) {
     return { valid: false, error: "invalid signer_pubkey format" };
   }
+  if (pubkeyMatch[1].length !== 64) {
+    return { valid: false, error: "invalid signer_pubkey length" };
+  }
   const pubkeyBytes = hexToBytes(pubkeyMatch[1]);
   if (!pubkeyBytes) {
     return { valid: false, error: "invalid signer_pubkey hex encoding" };
@@ -114,6 +117,9 @@ export async function validateAttestation(att: Attestation): Promise<ValidationR
   const sigMatch = signature.match(/^ed25519:([0-9a-f]+)$/);
   if (!sigMatch) {
     return { valid: false, error: "invalid signature format" };
+  }
+  if (sigMatch[1].length !== 128) {
+    return { valid: false, error: "invalid signature length" };
   }
   const sigBytes = hexToBytes(sigMatch[1]);
   if (!sigBytes) {

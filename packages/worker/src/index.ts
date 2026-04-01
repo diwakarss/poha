@@ -1,7 +1,7 @@
 import type { Env, Attestation, StoredAttestation } from "./types.js";
 import { validateAttestation } from "./validate.js";
 import { generateShortId } from "./short-id.js";
-import { checkRateLimit, incrementRateLimit } from "./rate-limit.js";
+import { checkAndIncrementRateLimit } from "./rate-limit.js";
 import { renderVerifyPage, render404Page } from "./verify-page.js";
 
 export { RateLimiterDO } from "./rate-limiter-do.js";
@@ -51,7 +51,14 @@ async function handleAttest(request: Request, env: Env): Promise<Response> {
   // Parse body
   let att: Attestation;
   try {
-    att = await request.json() as Attestation;
+    const body = await request.json();
+    if (body === null || typeof body !== "object" || Array.isArray(body)) {
+      return Response.json({ error: "body must be a JSON object" }, {
+        status: 400,
+        headers: corsHeaders(request),
+      });
+    }
+    att = body as Attestation;
   } catch {
     return Response.json({ error: "invalid JSON body" }, {
       status: 400,
@@ -68,8 +75,8 @@ async function handleAttest(request: Request, env: Env): Promise<Response> {
     });
   }
 
-  // Rate limiting: 100 per pubkey per day
-  const rateCheck = await checkRateLimit(env, att.signer_pubkey);
+  // Rate limiting: 100 per pubkey per day (atomic check + increment)
+  const rateCheck = await checkAndIncrementRateLimit(env, att.signer_pubkey);
   if (!rateCheck.allowed) {
     return Response.json({ error: "rate limit exceeded (100/day per key)" }, {
       status: 429,
@@ -109,9 +116,6 @@ async function handleAttest(request: Request, env: Env): Promise<Response> {
     JSON.stringify(stored),
     { expirationTtl: KV_TTL_SECONDS }
   );
-
-  // Increment rate limit
-  await incrementRateLimit(env, att.signer_pubkey);
 
   return Response.json({
     short_id: shortId,
