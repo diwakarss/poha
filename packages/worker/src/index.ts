@@ -2,19 +2,20 @@ import type { Env, Attestation, StoredAttestation } from "./types.js";
 import { validateAttestation } from "./validate.js";
 import { generateShortId } from "./short-id.js";
 import { checkAndIncrementRateLimit } from "./rate-limit.js";
-import { renderVerifyPage, render404Page } from "./verify-page.js";
+import { renderVerifyPage, render404Page, renderLandingPage } from "./verify-page.js";
 
 export { RateLimiterDO } from "./rate-limiter-do.js";
 
 const KV_TTL_SECONDS = 365 * 24 * 60 * 60; // 1 year
 const MAX_COLLISION_RETRIES = 5;
+const SHORT_ID_PATTERN = /^\/([A-Za-z0-9]{5})$/;
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     const path = url.pathname;
 
-    // CORS headers for API endpoints
+    // CORS preflight
     if (request.method === "OPTIONS") {
       return new Response(null, {
         headers: corsHeaders(request),
@@ -26,21 +27,23 @@ export default {
       return handleAttest(request, env);
     }
 
-    // GET /v/:id — verification page (HTML)
-    const verifyMatch = path.match(/^\/v\/([A-Za-z0-9]{5})$/);
-    if (request.method === "GET" && verifyMatch) {
-      return handleVerify(verifyMatch[1], env, request);
-    }
-
     // GET /api/:id — raw attestation JSON
     const apiMatch = path.match(/^\/api\/([A-Za-z0-9]{5})$/);
     if (request.method === "GET" && apiMatch) {
       return handleApi(apiMatch[1], env, request);
     }
 
-    // GET / — health check
+    // GET / — landing page
     if (request.method === "GET" && path === "/") {
-      return Response.json({ service: "poha-worker", version: "0.1", status: "ok" });
+      return new Response(renderLandingPage(), {
+        headers: { "Content-Type": "text/html;charset=utf-8" },
+      });
+    }
+
+    // GET /:id — verification page (5-char alphanumeric)
+    const verifyMatch = path.match(SHORT_ID_PATTERN);
+    if (request.method === "GET" && verifyMatch) {
+      return handleVerify(verifyMatch[1], env, request);
     }
 
     return Response.json({ error: "not found" }, { status: 404 });
@@ -48,7 +51,6 @@ export default {
 };
 
 async function handleAttest(request: Request, env: Env): Promise<Response> {
-  // Parse body
   let att: Attestation;
   try {
     const body = await request.json();
@@ -66,7 +68,6 @@ async function handleAttest(request: Request, env: Env): Promise<Response> {
     });
   }
 
-  // Validate attestation (structure, signature, timestamp, score/band)
   let validation;
   try {
     validation = await validateAttestation(att);
@@ -83,7 +84,6 @@ async function handleAttest(request: Request, env: Env): Promise<Response> {
     });
   }
 
-  // Rate limiting: 100 per pubkey per day (atomic check + increment)
   const rateCheck = await checkAndIncrementRateLimit(env, att.signer_pubkey);
   if (!rateCheck.allowed) {
     return Response.json({ error: "rate limit exceeded (100/day per key)" }, {
@@ -95,7 +95,6 @@ async function handleAttest(request: Request, env: Env): Promise<Response> {
     });
   }
 
-  // Generate unique short ID (retry on collision)
   let shortId = "";
   for (let i = 0; i < MAX_COLLISION_RETRIES; i++) {
     const candidate = generateShortId();
@@ -112,7 +111,6 @@ async function handleAttest(request: Request, env: Env): Promise<Response> {
     });
   }
 
-  // Store in KV
   const stored: StoredAttestation = {
     attestation: att,
     created_at: new Date().toISOString(),
@@ -127,7 +125,7 @@ async function handleAttest(request: Request, env: Env): Promise<Response> {
 
   return Response.json({
     short_id: shortId,
-    verify_url: `/v/${shortId}`,
+    verify_url: `/${shortId}`,
     remaining_today: rateCheck.remaining,
   }, {
     status: 201,
@@ -172,9 +170,11 @@ async function handleApi(id: string, env: Env, request: Request): Promise<Respon
 }
 
 const ALLOWED_ORIGINS = [
+  "https://poha.ink",
+  "https://web.poha.ink",
+  "https://app.poha.ink",
   "https://poha.dev",
   "https://www.poha.dev",
-  "https://poha.ink",
   "https://www.poha.ink",
   "http://localhost:5173",
 ];
