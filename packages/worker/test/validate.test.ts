@@ -139,4 +139,21 @@ describe("validateAttestation", () => {
     expect(result.valid).toBe(false);
     expect(result.error).toContain("composition_duration_ms");
   });
+
+  test("rejects future timestamp", async () => {
+    const future = new Date(Date.now() + 48 * 60 * 60 * 1000);
+    future.setMinutes(0, 0, 0);
+    const att = await makeSignedAttestation({ timestamp_hour: future.toISOString() });
+    const result = await validateAttestation(att);
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain("future");
+  });
+
+  test("rejects invalid signature hex encoding", async () => {
+    const att = await makeSignedAttestation();
+    att.signature = "ed25519:zzzz_not_hex";
+    const result = await validateAttestation(att);
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain("signature");
+  });
 });

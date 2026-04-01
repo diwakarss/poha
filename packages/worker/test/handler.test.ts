@@ -1,6 +1,9 @@
 import { describe, expect, test, beforeEach } from "bun:test";
 import worker from "../src/index.js";
 import type { Env, StoredAttestation } from "../src/types.js";
+import { buildAttestation } from "@poha/sdk";
+import * as ed from "@noble/ed25519";
+import { bytesToHex } from "@poha/sdk";
 
 /** In-memory KV mock */
 function createMockKV(): KVNamespace {
@@ -185,6 +188,47 @@ describe("worker handler", () => {
     const body = await res.json() as any;
     expect(body.short_id).toBe("xYzWq");
     expect(body.attestation.effort_band).toBe("moderate");
+  });
+
+  // --- Collision retry exhaustion ---
+
+  test("POST /attest returns 500 when all short ID retries collide", async () => {
+    // KV that always returns existing data on get (simulates full collision)
+    const alwaysCollideKV = {
+      get: async (_key: string) => "existing",
+      put: async () => {},
+      delete: async () => {},
+      list: async () => ({ keys: [], list_complete: true, cacheStatus: null }),
+      getWithMetadata: async () => ({ value: null, metadata: null, cacheStatus: null }),
+    } as unknown as KVNamespace;
+    const collisionEnv: Env = { ATTESTATIONS: alwaysCollideKV, RATE_LIMITER: env.RATE_LIMITER };
+
+    // Build a valid signed attestation to pass validation
+    const privKey = ed.utils.randomPrivateKey();
+    const pubKey = await ed.getPublicKeyAsync(privKey);
+    const pubHex = bytesToHex(pubKey);
+    const att = await buildAttestation({
+      messageText: "collision test",
+      effortScore: 0.82,
+      effortBand: "high",
+      compositionDurationMs: 45000,
+      inputMethod: "web_keyboard",
+      finalTextLength: 14,
+      signerPubkey: `ed25519:${pubHex}`,
+      signer: (bytes) => ed.signAsync(bytes, privKey),
+    });
+
+    const res = await worker.fetch(
+      makeRequest("/attest", {
+        method: "POST",
+        body: JSON.stringify(att),
+        headers: { "Content-Type": "application/json" },
+      }),
+      collisionEnv
+    );
+    expect(res.status).toBe(500);
+    const body = await res.json() as any;
+    expect(body.error).toContain("unique ID");
   });
 
   // --- Route pattern validation ---

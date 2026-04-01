@@ -7,6 +7,7 @@
  * 2. Normalize to Unicode NFC form
  * 3. Collapse multiple consecutive newlines to double-newline
  */
+import { bytesToHex } from "./canonical.js";
 
 /**
  * Normalize text content before hashing.
@@ -29,9 +30,6 @@ export async function contentHash(text: string): Promise<string> {
   const normalized = normalizeContent(text);
   const bytes = new TextEncoder().encode(normalized);
   const hashBuffer = await crypto.subtle.digest("SHA-256", bytes);
-  const hashArray = new Uint8Array(hashBuffer);
-  const hex = Array.from(hashArray)
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
+  const hex = bytesToHex(new Uint8Array(hashBuffer));
   return `sha256:${hex}`;
 }

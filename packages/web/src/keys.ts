@@ -4,6 +4,7 @@
  */
 import * as ed from "@noble/ed25519";
 import { get, set } from "idb-keyval";
+import { bytesToHex } from "@poha/sdk";
 
 const PRIVKEY_KEY = "poha_ed25519_privkey";
 const PUBKEY_KEY = "poha_ed25519_pubkey";
@@ -60,8 +61,3 @@ export async function sign(bytes: Uint8Array): Promise<Uint8Array> {
   return ed.signAsync(bytes, kp.privateKey);
 }
 
-function bytesToHex(bytes: Uint8Array): string {
-  return Array.from(bytes)
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}

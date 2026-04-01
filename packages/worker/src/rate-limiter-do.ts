@@ -25,8 +25,8 @@ export class RateLimiterDO implements DurableObject {
       return this.handleCheck();
     }
 
-    if (url.pathname === "/increment" && request.method === "POST") {
-      return this.handleIncrement();
+    if (url.pathname === "/check-and-increment" && request.method === "POST") {
+      return this.handleCheckAndIncrement();
     }
 
     return Response.json({ error: "unknown action" }, { status: 400 });
@@ -43,27 +43,29 @@ export class RateLimiterDO implements DurableObject {
       return Response.json({ allowed: false, remaining: 0 });
     }
 
-    return Response.json({ allowed: true, remaining: DAILY_LIMIT - count - 1 });
+    return Response.json({ allowed: true, remaining: DAILY_LIMIT - count });
   }
 
-  private async handleIncrement(): Promise<Response> {
+  /**
+   * Atomically check the limit and increment in one call.
+   * Returns { allowed, remaining } — if allowed is true, the counter was already incremented.
+   */
+  private async handleCheckAndIncrement(): Promise<Response> {
     const today = new Date().toISOString().split("T")[0];
     const stored = await this.state.storage.get<RateLimitState>("limit");
 
-    // Reset if it's a new day, otherwise increment
-    let count: number;
-    if (stored && stored.date === today) {
-      count = stored.count + 1;
-    } else {
-      count = 1;
+    const currentCount = stored && stored.date === today ? stored.count : 0;
+
+    if (currentCount >= DAILY_LIMIT) {
+      return Response.json({ allowed: false, remaining: 0 });
     }
 
-    await this.state.storage.put<RateLimitState>("limit", { count, date: today });
+    const newCount = currentCount + 1;
+    await this.state.storage.put<RateLimitState>("limit", { count: newCount, date: today });
 
     return Response.json({
-      allowed: count <= DAILY_LIMIT,
-      remaining: Math.max(0, DAILY_LIMIT - count),
-      count,
+      allowed: true,
+      remaining: Math.max(0, DAILY_LIMIT - newCount),
     });
   }
 }

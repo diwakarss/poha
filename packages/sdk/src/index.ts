@@ -35,7 +35,7 @@ export { computeScore, effortBand } from "./score.js";
 export { normalizeContent, contentHash } from "./content.js";
 
 // Canonical JSON
-export { canonicalJSON, toUTF8Bytes } from "./canonical.js";
+export { canonicalJSON, toUTF8Bytes, bytesToHex } from "./canonical.js";
 
 // Attestation
 export { buildAttestation } from "./attestation.js";

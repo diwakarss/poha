@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { validateAttestation } from "../src/validate.js";
-import { buildAttestation } from "@poha/sdk";
+import { buildAttestation, bytesToHex } from "@poha/sdk";
 import type { Attestation } from "../src/types.js";
 import * as ed from "@noble/ed25519";
 
@@ -12,9 +12,7 @@ describe("SDK → Worker integration", () => {
   async function makeKeypair() {
     const privateKey = ed.utils.randomPrivateKey();
     const publicKey = await ed.getPublicKeyAsync(privateKey);
-    const publicKeyHex = Array.from(publicKey)
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
+    const publicKeyHex = bytesToHex(publicKey);
     return { privateKey, publicKey, publicKeyHex };
   }
 

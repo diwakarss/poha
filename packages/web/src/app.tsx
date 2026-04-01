@@ -8,8 +8,7 @@ import {
   extractSignals,
   computeScore,
   normalizeContent,
-  contentHash,
-  canonicalJSON,
+  buildAttestation,
   BADGE_READY_THRESHOLD,
 } from "@poha/sdk";
 import type { EffortBand } from "@poha/sdk";
@@ -77,35 +76,19 @@ const App: FunctionComponent = () => {
 
     try {
       const kp = await getKeyPair();
-      const hash = await contentHash(text);
       const raw = extractSignals(eventsRef.current);
       const result = computeScore(raw);
 
-      const now = new Date();
-      now.setMinutes(0, 0, 0);
-
-      const unsigned: Record<string, unknown> = {
-        poha_version: "0.1",
-        content_hash: hash,
-        effort_score: Math.round(result.score * 100) / 100,
-        effort_band: result.band,
-        composition_duration_ms: raw.durationMs,
-        input_method: "web_keyboard",
-        final_text_length: normalizeContent(text).length,
-        timestamp_hour: now.toISOString(),
-        signer_pubkey: `ed25519:${kp.publicKeyHex}`,
-      };
-
-      const signingInput = new TextEncoder().encode(canonicalJSON(unsigned));
-      const sigBytes = await sign(signingInput);
-      const sigHex = Array.from(sigBytes)
-        .map((b) => b.toString(16).padStart(2, "0"))
-        .join("");
-
-      const attestation = {
-        ...unsigned,
-        signature: `ed25519:${sigHex}`,
-      };
+      const attestation = await buildAttestation({
+        messageText: text,
+        effortScore: result.score,
+        effortBand: result.band,
+        compositionDurationMs: raw.durationMs,
+        inputMethod: "web_keyboard",
+        finalTextLength: normalizeContent(text).length,
+        signerPubkey: `ed25519:${kp.publicKeyHex}`,
+        signer: sign,
+      });
 
       const response = await submitAttestation(attestation);
       setSuccessData({
@@ -140,7 +123,8 @@ const App: FunctionComponent = () => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Fallback: select text
+      // Fallback: prompt user to copy manually
+      window.prompt("Copy this link:", fullUrl);
     }
   }, [successData]);
 

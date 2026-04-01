@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { canonicalJSON, toUTF8Bytes } from "../src/canonical.js";
+import { canonicalJSON, toUTF8Bytes, bytesToHex } from "../src/canonical.js";
 
 describe("canonicalJSON", () => {
   test("sorts keys alphabetically", () => {
@@ -83,5 +83,21 @@ describe("toUTF8Bytes", () => {
   test("encodes Unicode correctly", () => {
     const bytes = toUTF8Bytes("✍️");
     expect(bytes.length).toBeGreaterThan(1); // multi-byte
+  });
+});
+
+describe("bytesToHex", () => {
+  test("encodes empty array", () => {
+    expect(bytesToHex(new Uint8Array([]))).toBe("");
+  });
+
+  test("encodes known bytes", () => {
+    expect(bytesToHex(new Uint8Array([0, 1, 15, 16, 255]))).toBe("00010f10ff");
+  });
+
+  test("produces lowercase hex", () => {
+    const hex = bytesToHex(new Uint8Array([171, 205])); // 0xAB, 0xCD
+    expect(hex).toBe("abcd");
+    expect(hex).toBe(hex.toLowerCase());
   });
 });

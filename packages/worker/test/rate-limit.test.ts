@@ -31,35 +31,34 @@ describe("RateLimiterDO", () => {
     const res = await limiter.fetch(makeReq("/check"));
     const body = await res.json() as any;
     expect(body.allowed).toBe(true);
+    expect(body.remaining).toBe(100);
+  });
+
+  test("check-and-increment atomically increments", async () => {
+    const res = await limiter.fetch(makeReq("/check-and-increment"));
+    const body = await res.json() as any;
+    expect(body.allowed).toBe(true);
     expect(body.remaining).toBe(99);
   });
 
-  test("tracks count after increments", async () => {
+  test("tracks count after atomic increments", async () => {
     for (let i = 0; i < 5; i++) {
-      await limiter.fetch(makeReq("/increment"));
+      await limiter.fetch(makeReq("/check-and-increment"));
     }
     const res = await limiter.fetch(makeReq("/check"));
     const body = await res.json() as any;
     expect(body.allowed).toBe(true);
-    expect(body.remaining).toBe(94); // 100 - 5 - 1
+    expect(body.remaining).toBe(95); // 100 - 5
   });
 
-  test("blocks after 100 increments", async () => {
+  test("blocks after 100 atomic increments", async () => {
     for (let i = 0; i < 100; i++) {
-      await limiter.fetch(makeReq("/increment"));
+      await limiter.fetch(makeReq("/check-and-increment"));
     }
-    const res = await limiter.fetch(makeReq("/check"));
+    const res = await limiter.fetch(makeReq("/check-and-increment"));
     const body = await res.json() as any;
     expect(body.allowed).toBe(false);
     expect(body.remaining).toBe(0);
-  });
-
-  test("increment returns count info", async () => {
-    const res = await limiter.fetch(makeReq("/increment"));
-    const body = await res.json() as any;
-    expect(body.count).toBe(1);
-    expect(body.allowed).toBe(true);
-    expect(body.remaining).toBe(99);
   });
 
   test("separate DO instances have independent limits", async () => {
@@ -67,7 +66,7 @@ describe("RateLimiterDO", () => {
 
     // Max out limiter1
     for (let i = 0; i < 100; i++) {
-      await limiter.fetch(makeReq("/increment"));
+      await limiter.fetch(makeReq("/check-and-increment"));
     }
 
     // limiter2 should still be allowed

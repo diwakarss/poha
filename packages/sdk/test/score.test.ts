@@ -91,6 +91,29 @@ describe("computeScore", () => {
     expect(result.score).toBeGreaterThanOrEqual(0.0);
   });
 
+  test("handles degenerate config where max <= min", () => {
+    const raw: RawSignals = {
+      durationMs: 90_000,
+      entropy: 2.0,
+      pasteRatio: 0.1,
+      revisionRate: 5,
+      eventDensity: 1.5,
+    };
+    // Config with max === min for duration (degenerate)
+    const config = {
+      duration: { weight: 0.25, min: 100, max: 100 },
+      entropy: { weight: 0.20, min: 0, max: 3.5 },
+      pasteRatio: { weight: 0.20, min: 0, max: 1 },
+      revisionRate: { weight: 0.15, min: 0, max: 10 },
+      eventDensity: { weight: 0.20, min: 0, max: 3 },
+    };
+    const result = computeScore(raw, config);
+    // Duration normalized to 0 (max <= min), so it contributes 0
+    expect(result.signals.duration).toBe(0);
+    expect(result.score).toBeGreaterThanOrEqual(0);
+    expect(result.score).toBeLessThanOrEqual(1);
+  });
+
   test("individual signals are in result", () => {
     const raw: RawSignals = {
       durationMs: 90_000,
