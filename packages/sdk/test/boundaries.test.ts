@@ -5,7 +5,7 @@ import { EFFORT_THRESHOLDS } from "../src/types.js";
 
 /**
  * T-4: Score/band boundary tests.
- * Verify exact behavior at threshold values (0.0, 0.1, 0.4, 0.7, 1.0).
+ * Verify exact behavior at threshold values (0.0, 0.1, 0.3, 0.6, 1.0).
  */
 describe("score/band boundaries", () => {
   const cases: [number, EffortBand][] = [
@@ -14,21 +14,21 @@ describe("score/band boundaries", () => {
     [0.05, "none"],
     [0.09999, "none"],
 
-    // low: [0.1, 0.4)
+    // low: [0.1, 0.3)
     [0.1, "low"],
     [0.1001, "low"],
-    [0.25, "low"],
-    [0.3999, "low"],
+    [0.2, "low"],
+    [0.2999, "low"],
 
-    // moderate: [0.4, 0.7)
-    [0.4, "moderate"],
-    [0.4001, "moderate"],
-    [0.55, "moderate"],
-    [0.6999, "moderate"],
+    // moderate: [0.3, 0.6)
+    [0.3, "moderate"],
+    [0.3001, "moderate"],
+    [0.45, "moderate"],
+    [0.5999, "moderate"],
 
-    // high: [0.7, 1.0]
-    [0.7, "high"],
-    [0.7001, "high"],
+    // high: [0.6, 1.0]
+    [0.6, "high"],
+    [0.6001, "high"],
     [0.85, "high"],
     [1.0, "high"],
   ];
@@ -46,15 +46,13 @@ describe("score/band boundaries", () => {
   });
 
   test("worker BAND_THRESHOLDS ranges are contiguous with SDK thresholds", () => {
-    // These are the ranges the worker uses for validation
     const workerBands: Record<string, [number, number]> = {
       none: [0.0, 0.1],
-      low: [0.1, 0.4],
-      moderate: [0.4, 0.7],
-      high: [0.7, 1.0],
+      low: [0.1, 0.3],
+      moderate: [0.3, 0.6],
+      high: [0.6, 1.0],
     };
 
-    // Each SDK threshold should match the start of its worker band range
     expect(EFFORT_THRESHOLDS.none).toBe(workerBands.none[0]);
     expect(EFFORT_THRESHOLDS.low).toBe(workerBands.low[0]);
     expect(EFFORT_THRESHOLDS.moderate).toBe(workerBands.moderate[0]);
