@@ -1,0 +1,291 @@
+/* PoHA Web App – Industrial/Utilitarian per DESIGN.md */
+:root {
+  /* Surfaces */
+  --bg-primary: #111111;
+  --bg-secondary: #1a1a1a;
+  --bg-elevated: #222222;
+  --bg-input: #181818;
+
+  /* Text */
+  --text-primary: #e0e0e0;
+  --text-secondary: #999999;
+  --text-muted: #666666;
+
+  /* Effort */
+  --effort-high: #22c55e;
+  --effort-moderate: #eab308;
+  --effort-low: #f97316;
+  --effort-none: #555555;
+
+  /* Semantic */
+  --success: #22c55e;
+  --error: #ef4444;
+  --warning: #eab308;
+  --info: #60a5fa;
+
+  /* Borders */
+  --border-subtle: #2a2a2a;
+  --border-focus: #555555;
+
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+
+  /* Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+}
+
+#app {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: var(--space-lg) var(--space-md);
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-xl);
+}
+
+.header-shield {
+  width: 32px;
+  height: 32px;
+  fill: var(--text-secondary);
+}
+
+.header h1 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+/* First-visit banner */
+.banner {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  margin-bottom: var(--space-lg);
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.banner-dismiss {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  float: right;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0 0 0 var(--space-sm);
+}
+
+/* Compose area */
+.compose {
+  position: relative;
+}
+
+.compose textarea {
+  width: 100%;
+  min-height: 200px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 15px;
+  line-height: 1.6;
+  padding: var(--space-md);
+  resize: vertical;
+  outline: none;
+  transition: border-color 150ms;
+}
+
+.compose textarea:focus {
+  border-color: var(--border-focus);
+}
+
+.compose textarea::placeholder {
+  color: var(--text-muted);
+}
+
+/* Effort indicator */
+.effort-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+  padding: var(--space-sm) 0;
+}
+
+.effort-track {
+  flex: 1;
+  height: 3px;
+  background: var(--border-subtle);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.effort-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 300ms ease-out, background-color 300ms ease-out;
+}
+
+.effort-label {
+  font-size: 12px;
+  font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+  color: var(--text-muted);
+  min-width: 44px;
+  text-align: right;
+}
+
+/* Badge button */
+.badge-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  width: 100%;
+  padding: 12px var(--space-md);
+  margin-top: var(--space-md);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 150ms, border-color 150ms;
+  min-height: 44px;
+}
+
+.badge-btn:hover:not(:disabled) {
+  background: var(--border-subtle);
+  border-color: var(--border-focus);
+}
+
+.badge-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.badge-btn.ready {
+  border-color: var(--success);
+  color: var(--success);
+}
+
+/* States */
+.badge-btn .spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin 800ms linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Success card */
+.success-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--success);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  margin-top: var(--space-md);
+  text-align: center;
+}
+
+.success-card h2 {
+  font-size: 16px;
+  color: var(--success);
+  margin-bottom: var(--space-sm);
+}
+
+.success-card .badge-link {
+  display: block;
+  font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+  font-size: 14px;
+  color: var(--info);
+  margin: var(--space-md) 0;
+  word-break: break-all;
+}
+
+.success-card .copy-btn {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 13px;
+  padding: var(--space-sm) var(--space-md);
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.success-card .copy-btn:hover {
+  border-color: var(--border-focus);
+}
+
+.success-card .new-btn {
+  display: block;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  margin-top: var(--space-md);
+  padding: var(--space-sm);
+}
+
+/* Error toast */
+.error-toast {
+  background: var(--error);
+  color: white;
+  font-size: 13px;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-sm);
+  margin-top: var(--space-sm);
+  animation: fadeIn 150ms ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Footer */
+.footer {
+  margin-top: var(--space-2xl);
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+}
