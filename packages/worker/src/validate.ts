@@ -10,9 +10,9 @@ const MAX_TIMESTAMP_AGE_MS = 24 * 60 * 60 * 1000; // 24 hours
 /** Band thresholds for consistency checking */
 const BAND_THRESHOLDS = {
   none: [0.0, 0.1],
-  low: [0.1, 0.4],
-  moderate: [0.4, 0.7],
-  high: [0.7, 1.0],
+  low: [0.1, 0.3],
+  moderate: [0.3, 0.6],
+  high: [0.6, 1.0],
 } as const;
 
 /** Hex string to Uint8Array. Returns null if invalid. */
