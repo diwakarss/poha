@@ -1,5 +1,5 @@
 import type { Attestation, EffortBand, Signer } from "./types.js";
-import { canonicalJSON, toUTF8Bytes } from "./canonical.js";
+import { canonicalJSON, toUTF8Bytes, bytesToHex } from "./canonical.js";
 import { contentHash } from "./content.js";
 
 /** Input method type */
@@ -64,9 +64,7 @@ export async function buildAttestation(
   const signatureBytes = await params.signer(canonicalBytes);
 
   // Hex-encode signature
-  const signatureHex = Array.from(signatureBytes)
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
+  const signatureHex = bytesToHex(signatureBytes);
 
   return {
     ...(unsigned as Omit<Attestation, "signature">),
