@@ -1,0 +1,7 @@
+{
+  "name": "poha",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ]
+}
