@@ -154,7 +154,7 @@ describe("worker handler", () => {
     expect(res.headers.get("Content-Type")).toContain("text/html");
     const html = await res.text();
     expect(html).toContain("aBcDe");
-    expect(html).toContain("Typed by Hand");
+    expect(html).toContain("Typed by hand");
   });
 
   // --- GET /api/:id ---

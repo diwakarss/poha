@@ -2,7 +2,10 @@ import { useState, useRef, useEffect, useCallback } from "preact/hooks";
 import type { FunctionComponent } from "preact";
 import { attachCollector } from "./collector";
 import { getKeyPair, sign } from "./keys";
-import { submitAttestation } from "./api";
+import { submitAttestation, API_BASE } from "./api";
+
+/** Short domain for the badge line — human-readable, not the API host */
+const BADGE_DOMAIN = import.meta.env.VITE_BADGE_DOMAIN || "poha.ink";
 import type { InputEvent } from "./collector";
 import {
   extractSignals,
@@ -19,9 +22,19 @@ type AppState = "composing" | "badging" | "success" | "error";
 interface SuccessData {
   shortId: string;
   verifyUrl: string;
+  badgeUrl: string;
 }
 
 const SCORE_DEBOUNCE_MS = 300;
+
+const effortLabel = (band: EffortBand): string => {
+  switch (band) {
+    case "none": return "Start typing";
+    case "low": return "Start typing";
+    case "moderate": return "Building effort...";
+    case "high": return "Ready to badge";
+  }
+};
 
 const App: FunctionComponent = () => {
   const [state, setState] = useState<AppState>("composing");
@@ -50,7 +63,7 @@ const App: FunctionComponent = () => {
     setBand(result.band);
   }, []);
 
-  // Attach collector — push to ref, debounce score update
+  // Attach collector — re-runs when textarea remounts (state changes between success/composing)
   useEffect(() => {
     const ta = textareaRef.current;
     if (!ta) return;
@@ -65,7 +78,7 @@ const App: FunctionComponent = () => {
       cleanup();
       if (scoreTimerRef.current) clearTimeout(scoreTimerRef.current);
     };
-  }, [recalcScore]);
+  }, [recalcScore, state]);
 
   const isReady = score >= BADGE_READY_THRESHOLD && text.trim().length > 0;
 
@@ -91,15 +104,25 @@ const App: FunctionComponent = () => {
       });
 
       const response = await submitAttestation(attestation);
+      const verifyUrl = `${API_BASE}${response.verify_url}`;
+      const badgeUrl = `${BADGE_DOMAIN}/${response.short_id}`;
       setSuccessData({
         shortId: response.short_id,
-        verifyUrl: response.verify_url,
+        verifyUrl,
+        badgeUrl,
       });
+      // Auto-copy message + badge line to clipboard
+      const badgedText = `${text}\n\n\u270D\uFE0F Human-typed \u00B7 ${badgeUrl}`;
+      try {
+        await navigator.clipboard.writeText(badgedText);
+        setCopied(true);
+      } catch {
+        // Will show manual copy button
+      }
       setState("success");
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Failed to create badge");
       setState("error");
-      // Auto-recover to composing after 3 seconds
       setTimeout(() => setState("composing"), 3000);
     }
   }, [isReady, state, text]);
@@ -117,59 +140,53 @@ const App: FunctionComponent = () => {
 
   const handleCopy = useCallback(async () => {
     if (!successData) return;
-    const fullUrl = `${window.location.origin}${successData.verifyUrl}`;
+    const badgedText = `${text}\n\n\u270D\uFE0F Human-typed \u00B7 ${successData.badgeUrl}`;
     try {
-      await navigator.clipboard.writeText(fullUrl);
+      await navigator.clipboard.writeText(badgedText);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Fallback: prompt user to copy manually
-      window.prompt("Copy this link:", fullUrl);
+      window.prompt("Copy this:", badgedText);
     }
-  }, [successData]);
+  }, [successData, text]);
 
   const dismissBanner = useCallback(() => {
     setShowBanner(false);
     localStorage.setItem("poha_banner_dismissed", "1");
   }, []);
 
-  const bandColor = band === "high" ? "var(--effort-high)"
-    : band === "moderate" ? "var(--effort-moderate)"
-    : band === "low" ? "var(--effort-low)"
-    : "var(--effort-none)";
+  const pillClass = band === "high" ? "effort-high"
+    : band === "moderate" ? "effort-moderate"
+    : "effort-none";
 
   return (
     <>
       <div class="header">
-        <svg class="header-shield" viewBox="0 0 24 24">
-          <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 2.18l7 3.12v4.7c0 4.83-3.4 9.36-7 10.5-3.6-1.14-7-5.67-7-10.5V6.3l7-3.12z" />
-        </svg>
         <h1>PoHA</h1>
+        <span class="header-tagline">Prove you typed it</span>
       </div>
 
       {showBanner && (
         <div class="banner">
-          <button class="banner-dismiss" onClick={dismissBanner} aria-label="Dismiss">
-            &times;
-          </button>
-          Type your message below. PoHA measures your typing rhythm to prove you wrote it by hand.
-          When enough effort is detected, you can badge your message with a verification link.
+          <span>Type a message. We'll measure your typing effort and give you a badge proving you wrote it.</span>
+          <button class="banner-dismiss" onClick={dismissBanner}>Got it</button>
         </div>
       )}
 
       {state === "success" && successData ? (
         <div class="success-card">
           <h2>Badged</h2>
-          <p style={{ color: "var(--text-secondary)", fontSize: "13px" }}>
-            Your message has been attested as human-authored.
-          </p>
-          <span class="badge-link">{successData.verifyUrl}</span>
-          <button class="copy-btn" onClick={handleCopy}>
-            {copied ? "Copied" : "Copy verification link"}
-          </button>
-          <button class="new-btn" onClick={handleReset}>
-            Write another message
-          </button>
+          <p class="success-message">{text}</p>
+          <span class="badge-link">{"\u270D\uFE0F"} Human-typed {"\u00B7"} {successData.badgeUrl}</span>
+          {copied && <p class="copied-note">Copied to clipboard</p>}
+          <div class="success-actions">
+            <button class={`copy-btn ${copied ? "copied" : ""}`} onClick={handleCopy}>
+              {copied ? "Copied!" : "Copy with badge"}
+            </button>
+            <button class="new-btn" onClick={handleReset}>
+              Write another message
+            </button>
+          </div>
         </div>
       ) : (
         <div class="compose">
@@ -182,37 +199,29 @@ const App: FunctionComponent = () => {
             aria-label="Compose message"
           />
 
-          <div class="effort-bar">
-            <div class="effort-track">
-              <div
-                class="effort-fill"
-                style={{
-                  width: `${Math.round(score * 100)}%`,
-                  backgroundColor: bandColor,
-                }}
-              />
+          <div class="compose-footer">
+            <div class={`effort-pill ${pillClass}`} aria-live="polite">
+              <span class="dot" />
+              {effortLabel(band)}
             </div>
-            <span class="effort-label" style={{ color: bandColor }}>
-              {band === "none" ? "—" : band}
-            </span>
-          </div>
 
-          <button
-            class={`badge-btn ${isReady ? "ready" : ""}`}
-            disabled={!isReady || state === "badging"}
-            onClick={handleBadge}
-          >
-            {state === "badging" ? (
-              <>
-                <span class="spinner" />
-                Creating badge...
-              </>
-            ) : isReady ? (
-              "Badge this message"
-            ) : (
-              "Keep typing to badge"
-            )}
-          </button>
+            <button
+              class={`badge-btn ${isReady ? "ready" : ""}`}
+              disabled={!isReady || state === "badging"}
+              onClick={handleBadge}
+            >
+              {state === "badging" ? (
+                <>
+                  <span class="spinner" />
+                  Creating badge...
+                </>
+              ) : isReady ? (
+                "Copy with badge"
+              ) : (
+                "Keep typing..."
+              )}
+            </button>
+          </div>
 
           {state === "error" && errorMsg && (
             <div class="error-toast">{errorMsg}</div>
@@ -221,7 +230,7 @@ const App: FunctionComponent = () => {
       )}
 
       <div class="footer">
-        Proof of Human Authorship v0.1
+        Proof of Human Attention v0.1
       </div>
     </>
   );

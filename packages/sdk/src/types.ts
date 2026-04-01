@@ -42,19 +42,19 @@ export interface SignalConfig {
 
 /** Default v1 signal weights and normalization ranges */
 export const DEFAULT_SIGNAL_CONFIG: Record<string, SignalConfig> = {
-  duration: { weight: 0.25, min: 5_000, max: 180_000 },
-  entropy: { weight: 0.30, min: 0.5, max: 3.5 },
+  duration: { weight: 0.20, min: 3_000, max: 60_000 },
+  entropy: { weight: 0.25, min: 0.5, max: 3.5 },
   pasteRatio: { weight: 0.20, min: 0, max: 1 },
-  revisionRate: { weight: 0.15, min: 0, max: 10 },
-  eventDensity: { weight: 0.10, min: 0.5, max: 3.0 },
+  revisionRate: { weight: 0.20, min: 0, max: 10 },
+  eventDensity: { weight: 0.15, min: 0.5, max: 3.0 },
 };
 
 /** Effort band thresholds */
 export const EFFORT_THRESHOLDS = {
   none: 0.0,
   low: 0.1,
-  moderate: 0.4,
-  high: 0.7,
+  moderate: 0.3,
+  high: 0.6,
 } as const;
 
 /** Badge-ready threshold (moderate or above) */
