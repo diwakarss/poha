@@ -1,0 +1,8 @@
+name = "poha-worker"
+main = "src/index.ts"
+compatibility_date = "2025-04-01"
+
+[[kv_namespaces]]
+binding = "ATTESTATIONS"
+id = "placeholder-prod-id"
+preview_id = "placeholder-preview-id"
