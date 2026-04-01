@@ -39,9 +39,19 @@ export async function validateAttestation(att: Attestation): Promise<ValidationR
     return { valid: false, error: `unsupported version: ${att.poha_version}` };
   }
 
-  // 2. Required fields
+  // 2. Required fields and type guards
   if (!att.content_hash || !att.signer_pubkey || !att.signature || !att.timestamp_hour) {
     return { valid: false, error: "missing required fields" };
+  }
+  if (
+    typeof att.content_hash !== "string" ||
+    typeof att.signer_pubkey !== "string" ||
+    typeof att.signature !== "string" ||
+    typeof att.timestamp_hour !== "string" ||
+    typeof att.input_method !== "string" ||
+    typeof att.effort_band !== "string"
+  ) {
+    return { valid: false, error: "fields must be strings" };
   }
 
   // 3. Content hash format

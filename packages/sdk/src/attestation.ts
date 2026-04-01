@@ -38,9 +38,9 @@ export async function buildAttestation(
 ): Promise<Attestation> {
   const hash = await contentHash(params.messageText);
 
-  // Round timestamp to hour precision for privacy
+  // Round timestamp to hour precision for privacy (UTC, not local time)
   const now = new Date();
-  now.setMinutes(0, 0, 0);
+  now.setUTCMinutes(0, 0, 0);
   const timestampHour = now.toISOString();
 
   // Round effort score to 2 decimal places
