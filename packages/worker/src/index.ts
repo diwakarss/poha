@@ -176,6 +176,7 @@ const ALLOWED_ORIGINS = [
   "https://www.poha.dev",
   "https://poha.ink",
   "https://www.poha.ink",
+  "http://localhost:5173",
 ];
 
 function corsHeaders(request?: Request): Record<string, string> {

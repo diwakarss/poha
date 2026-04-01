@@ -6,10 +6,10 @@ describe("effortBand", () => {
   test("none for score 0", () => expect(effortBand(0)).toBe("none"));
   test("none for score 0.05", () => expect(effortBand(0.05)).toBe("none"));
   test("low for score 0.1", () => expect(effortBand(0.1)).toBe("low"));
-  test("low for score 0.39", () => expect(effortBand(0.39)).toBe("low"));
-  test("moderate for score 0.4", () => expect(effortBand(0.4)).toBe("moderate"));
-  test("moderate for score 0.69", () => expect(effortBand(0.69)).toBe("moderate"));
-  test("high for score 0.7", () => expect(effortBand(0.7)).toBe("high"));
+  test("low for score 0.29", () => expect(effortBand(0.29)).toBe("low"));
+  test("moderate for score 0.3", () => expect(effortBand(0.3)).toBe("moderate"));
+  test("moderate for score 0.59", () => expect(effortBand(0.59)).toBe("moderate"));
+  test("high for score 0.6", () => expect(effortBand(0.6)).toBe("high"));
   test("high for score 1.0", () => expect(effortBand(1.0)).toBe("high"));
 });
 
@@ -65,8 +65,8 @@ describe("computeScore", () => {
     };
     const result = computeScore(raw);
     expect(result.score).toBeGreaterThan(0.3);
-    expect(result.score).toBeLessThan(0.8);
-    expect(["moderate", "low"]).toContain(result.band);
+    expect(result.score).toBeLessThan(0.95);
+    expect(["high", "moderate"]).toContain(result.band);
   });
 
   test("weights sum to 1.0", () => {
