@@ -68,7 +68,6 @@ cd packages/worker && npx wrangler deploy
 ## Docs
 
 - [Whitepaper](./WHITEPAPER.md) — what PoHA measures, how it scores, where it breaks
-- [Design system](./DESIGN.md) — colors, typography, spacing, components
 
 ## Contributing
 
