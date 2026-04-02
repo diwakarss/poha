@@ -54,8 +54,24 @@ describe("computeScore", () => {
       jitter: 0.8,
     };
     const result = computeScore(raw);
-    // pasteRatio contributes 0. Other signals still contribute.
-    expect(result.score).toBeLessThan(0.8);
+    // Hard gate: paste ratio > 0.5 caps score below badge threshold
+    expect(result.score).toBeLessThan(0.3);
+    expect(result.band).not.toBe("moderate");
+    expect(result.band).not.toBe("high");
+  });
+
+  test("majority-paste blocks badge even with good other signals", () => {
+    const raw: RawSignals = {
+      durationMs: 120_000,
+      entropy: 3.0,
+      pasteRatio: 0.6,       // 60% pasted, 40% typed
+      revisionRate: 8,
+      eventDensity: 2.5,
+      jitter: 1.0,
+    };
+    const result = computeScore(raw);
+    // Hard gate at 0.5 paste ratio — cannot reach badge threshold
+    expect(result.score).toBeLessThan(0.3);
   });
 
   test("realistic human typing session", () => {
