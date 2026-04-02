@@ -35,15 +35,16 @@ Everything in this repo is MIT licensed.
 
 ## Scoring
 
-Five signals, weighted sum, normalized to [0, 1]:
+Six signals, weighted sum, normalized to [0, 1]:
 
 | Signal | Weight | Measures |
 |---|---|---|
-| Keystroke entropy | 25% | Variety in typing rhythm |
+| Keystroke entropy | 20% | Variety in typing rhythm |
 | Paste ratio | 20% | Pasted vs typed (less paste = higher) |
 | Duration | 20% | Time composing (3s–180s) |
-| Revision rate | 20% | Edits per 100 chars |
+| Revision rate | 15% | Edits per 100 chars |
 | Event density | 15% | Keystrokes per second |
+| Jitter regularity | 10% | Detects scripted vs human typing rhythm |
 
 Bands: `none` (< 0.1), `low` (0.1–0.3), `moderate` (0.3–0.6), `high` (0.6+). Badge requires 0.3+.
 

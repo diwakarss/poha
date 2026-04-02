@@ -36,15 +36,16 @@ The link opens a verification page showing effort band, composition duration, an
 
 ## 3. How It Works
 
-Five signals are measured on-device. Each is normalized to [0, 1] and weighted into a composite effort score.
+Six signals are measured on-device. Each is normalized to [0, 1] and weighted into a composite effort score.
 
 | Signal | Weight | What it measures | Range |
 |---|---|---|---|
-| Keystroke entropy | 25% | Variety in typing rhythm (Shannon entropy over inter-keystroke intervals in 50ms bins) | 0.5–3.5 bits |
+| Keystroke entropy | 20% | Variety in typing rhythm (Shannon entropy over inter-keystroke intervals in 50ms bins) | 0.5–3.5 bits |
 | Paste ratio | 20% | Characters pasted vs typed — inverted, so less paste = higher score | 0–1.0 |
 | Duration | 20% | Time from first to last input event | 3–180 seconds |
-| Revision rate | 20% | Character deletions per 100 characters typed | 0–10 |
+| Revision rate | 15% | Character deletions per 100 characters typed | 0–10 |
 | Event density | 15% | Keystrokes per second | 0.5–3.0 |
+| Jitter regularity | 10% | CV of per-window IKI variance — high = human, low = scripted | 0.1–1.5 |
 
 **Bands:** `none` (< 0.1), `low` (0.1–0.3), `moderate` (0.3–0.6), `high` (0.6+). Badge requires moderate or above (0.3+).
 
