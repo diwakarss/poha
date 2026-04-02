@@ -21,7 +21,7 @@ Spent the morning debugging a race condition that
 only shows up under load. Turned out to be a missing
 mutex on the session cache. Three hours for one line.
 
-✍️ Human-typed · poha.ink/k8mTx
+✍️ Human-typed · poha.ink/iYraB
 ```
 
 The link opens a verification page showing effort band, composition duration, and timestamp. No message content is stored. No accounts required. No app needed on the receiver's end.

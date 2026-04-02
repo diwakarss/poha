@@ -523,7 +523,7 @@ export function renderLandingPage(): string {
               <span style="font-size:12px">\u270D\uFE0F</span>
               <span class="label">Human-typed</span>
             </span>
-            <a class="badge-link" href="https://poha.ink/k8mTx">poha.ink/k8mTx</a>
+            <a class="badge-link" href="https://poha.ink/iYraB">poha.ink/iYraB</a>
           </div>
         </div>
         <p class="demo-caption">Anyone can tap the link to verify.</p>

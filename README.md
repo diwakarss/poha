@@ -7,7 +7,7 @@ Spent the morning debugging a race condition that
 only shows up under load. Turned out to be a missing
 mutex on the session cache. Three hours for one line.
 
-✍️ Human-typed · poha.ink/k8mTx
+✍️ Human-typed · poha.ink/iYraB
 ```
 
 PoHA measures your typing behavior — keystroke timing, pauses, revisions, paste events — without reading what you type. If enough human effort is detected, you get a badge: a short link anyone can tap to verify.
