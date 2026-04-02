@@ -1,7 +1,7 @@
 # Design System — PoHA (Proof of Human Attention)
 
 ## Product Context
-- **What this is:** Badge any message with a verification link that proves human attention through typing behavior metadata. One line (`✍️ poha.ink/a3x9f`), no app needed on the receiving end.
+- **What this is:** Badge any message with a verification link that proves human attention through typing behavior metadata. One line (`✍️ poha.ink/iYraB`), no app needed on the receiving end.
 - **Who it's for:** People who want to prove they typed something themselves, not AI-generated. Messaging-heavy users.
 - **Space/industry:** Trust/verification, anti-AI-content provenance. Peers: SSL certificate pages, identity verification UIs, blockchain explorers.
 - **Project type:** Web app (compose page) + static verification page + Android app.
