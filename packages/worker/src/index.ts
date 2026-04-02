@@ -2,7 +2,8 @@ import type { Env, Attestation, StoredAttestation } from "./types.js";
 import { validateAttestation } from "./validate.js";
 import { generateShortId } from "./short-id.js";
 import { checkAndIncrementRateLimit } from "./rate-limit.js";
-import { renderVerifyPage, render404Page, renderLandingPage } from "./verify-page.js";
+import { renderVerifyPage, render404Page } from "./verify-page.js";
+import { renderLandingPage } from "./landing-page.js";
 
 export { RateLimiterDO } from "./rate-limiter-do.js";
 
@@ -11,7 +12,7 @@ const MAX_COLLISION_RETRIES = 5;
 const SHORT_ID_PATTERN = /^\/([A-Za-z0-9]{5})$/;
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
     const path = url.pathname;
 
@@ -43,7 +44,7 @@ export default {
     // GET /:id — verification page (5-char alphanumeric)
     const verifyMatch = path.match(SHORT_ID_PATTERN);
     if (request.method === "GET" && verifyMatch) {
-      return handleVerify(verifyMatch[1], env, request);
+      return handleVerify(verifyMatch[1], env, request, ctx);
     }
 
     return Response.json({ error: "not found" }, { status: 404 });
@@ -133,7 +134,7 @@ async function handleAttest(request: Request, env: Env): Promise<Response> {
   });
 }
 
-async function handleVerify(id: string, env: Env, request: Request): Promise<Response> {
+async function handleVerify(id: string, env: Env, request: Request, ctx: ExecutionContext): Promise<Response> {
   const data = await env.ATTESTATIONS.get(`att:${id}`);
   if (!data) {
     return new Response(render404Page(), {
@@ -141,6 +142,9 @@ async function handleVerify(id: string, env: Env, request: Request): Promise<Res
       headers: { "Content-Type": "text/html;charset=utf-8" },
     });
   }
+
+  // Track referrer domain (fire-and-forget)
+  ctx.waitUntil(trackReferrer(env, id, request));
 
   const stored: StoredAttestation = JSON.parse(data);
   return new Response(renderVerifyPage(stored), {
@@ -167,6 +171,26 @@ async function handleApi(id: string, env: Env, request: Request): Promise<Respon
       "Cache-Control": "public, max-age=3600",
     },
   });
+}
+
+async function trackReferrer(env: Env, id: string, request: Request): Promise<void> {
+  try {
+    const referer = request.headers.get("Referer");
+    if (!referer) return;
+    const domain = new URL(referer).hostname;
+    if (!domain) return;
+
+    const key = `ref:${domain}`;
+    const existing = await env.ATTESTATIONS.get(key);
+    const counts: Record<string, number> = existing ? JSON.parse(existing) : {};
+    counts[id] = (counts[id] || 0) + 1;
+
+    await env.ATTESTATIONS.put(key, JSON.stringify(counts), {
+      expirationTtl: KV_TTL_SECONDS,
+    });
+  } catch {
+    // Never fail the page render for analytics
+  }
 }
 
 const ALLOWED_ORIGINS = [

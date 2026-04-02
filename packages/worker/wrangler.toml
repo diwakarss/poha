@@ -4,8 +4,8 @@ compatibility_date = "2025-04-01"
 
 [[kv_namespaces]]
 binding = "ATTESTATIONS"
-id = "placeholder-prod-id"
-preview_id = "placeholder-preview-id"
+id = "108924792498428f8100a58f4a59e16d"
+preview_id = "6dccdd9dc3984b8993dd1b630cb2230b"
 
 [durable_objects]
 bindings = [
@@ -14,4 +14,4 @@ bindings = [
 
 [[migrations]]
 tag = "v1"
-new_classes = ["RateLimiterDO"]
+new_sqlite_classes = ["RateLimiterDO"]
