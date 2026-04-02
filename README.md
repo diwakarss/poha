@@ -24,6 +24,21 @@ PoHA measures your typing behavior — keystroke timing, pauses, revisions, past
 - Android keyboard app (June 2026)
 - iOS app (July 2026)
 
+## Install
+
+```bash
+npm install @poha/sdk
+```
+
+```typescript
+import {
+  extractSignals,
+  computeScore,
+  buildAttestation,
+  TypingSession,
+} from "@poha/sdk";
+```
+
 ## Packages
 
 | Package | What it does | License |
