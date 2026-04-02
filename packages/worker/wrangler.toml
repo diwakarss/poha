@@ -1,6 +1,7 @@
 name = "poha-worker"
 main = "src/index.ts"
 compatibility_date = "2025-04-01"
+account_id = "b3cca244b478c41574e09cb0adef1a60"
 
 [[kv_namespaces]]
 binding = "ATTESTATIONS"
