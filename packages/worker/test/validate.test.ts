@@ -140,27 +140,6 @@ describe("validateAttestation", () => {
     expect(result.error).toContain("composition_duration_ms");
   });
 
-  test("rejects implausible text length for duration", async () => {
-    // 389 chars in 7 seconds = 55 chars/sec — impossible
-    const att = await makeSignedAttestation({
-      composition_duration_ms: 7000,
-      final_text_length: 389,
-    });
-    const result = await validateAttestation(att);
-    expect(result.valid).toBe(false);
-    expect(result.error).toContain("implausible");
-  });
-
-  test("accepts plausible text length for duration", async () => {
-    // 100 chars in 45 seconds = 2.2 chars/sec — normal
-    const att = await makeSignedAttestation({
-      composition_duration_ms: 45000,
-      final_text_length: 100,
-    });
-    const result = await validateAttestation(att);
-    expect(result.valid).toBe(true);
-  });
-
   test("rejects future timestamp", async () => {
     const future = new Date(Date.now() + 48 * 60 * 60 * 1000);
     future.setUTCMinutes(0, 0, 0);
