@@ -2,6 +2,8 @@
 
 **Version 0.3 · April 2026 · Author: JD (@1nimit) · License: CC BY 4.0**
 
+**Live product:** [poha.ink](https://poha.ink) — the badge you can already use today.
+
 ---
 
 ## 1. The Problem
@@ -73,9 +75,9 @@ PoHA's defenses raise the cost of faking. They don't eliminate it. The protocol 
 
 **Privacy.** A stream of attestations from the same key reveals effort patterns, active hours, and communication cadence. Composite-by-default limits the behavioral surface. Key rotation limits linkability. Hourly timestamp rounding reduces work-pattern inference. Platforms that process attestations at scale will accumulate metadata regardless — regulatory frameworks (GDPR, India's DPDP Act) are the appropriate controls for that, not protocol design.
 
-## 5. The Protocol
+## 5. Open Source Components
 
-The signal engine, scoring algorithm, attestation format, and verification service are open source under MIT license. The protocol specification and scoring formula are published under CC BY 4.0. Anyone can build a compatible client.
+The signal engine, scoring algorithm, attestation format, and verification service (Cloudflare Worker) are open source under MIT. The spec and scoring formula are published under CC BY 4.0. Anyone can build a compatible client or fork the badge generator.
 
 Source: [github.com/diwakarss/poha](https://github.com/diwakarss/poha)
 
@@ -90,3 +92,7 @@ Source: [github.com/diwakarss/poha](https://github.com/diwakarss/poha)
 5. Murphy et al. "Shared Dataset on Natural HCI to Support Continuous Authentication Research." IEEE IJCB (2017)
 6. Goodhart. "Problems of Monetary Management." Reserve Bank of Australia (1975)
 7. Shannon. "A Mathematical Theory of Communication." Bell System Technical Journal (1948)
+
+---
+
+**Current status (April 2026):** Live on [poha.ink](https://poha.ink) as a web badge generator. Chrome extension, Android keyboard, and iOS app coming soon.
