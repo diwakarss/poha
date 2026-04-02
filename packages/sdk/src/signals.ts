@@ -1,6 +1,7 @@
 import type { InputEvent, RawSignals } from "./types.js";
 import { buildIKIHistogram } from "./histogram.js";
 import { shannonEntropy } from "./entropy.js";
+import { jitterRegularity } from "./jitter.js";
 
 /**
  * Extract raw signal values from a sequence of input events.
@@ -16,15 +17,17 @@ export function extractSignals(events: InputEvent[]): RawSignals {
       pasteRatio: 0,
       revisionRate: 0,
       eventDensity: 0,
+      jitter: 0,
     };
   }
 
   // Duration: first event to last event
   const durationMs = events[events.length - 1].timestamp - events[0].timestamp;
 
-  // IKI histogram and entropy
+  // IKI histogram, entropy, and jitter regularity
   const histogram = buildIKIHistogram(events);
   const entropy = shannonEntropy(histogram);
+  const jitter = jitterRegularity(events);
 
   // Character counts by source
   let typedChars = 0;
@@ -66,5 +69,6 @@ export function extractSignals(events: InputEvent[]): RawSignals {
     pasteRatio,
     revisionRate,
     eventDensity,
+    jitter,
   };
 }

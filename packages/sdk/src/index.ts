@@ -28,6 +28,9 @@ export { shannonEntropy } from "./entropy.js";
 // Signals
 export { extractSignals } from "./signals.js";
 
+// Jitter
+export { jitterRegularity } from "./jitter.js";
+
 // Score
 export { computeScore, effortBand } from "./score.js";
 

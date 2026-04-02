@@ -43,10 +43,11 @@ export interface SignalConfig {
 /** Default v1 signal weights and normalization ranges */
 export const DEFAULT_SIGNAL_CONFIG: Record<string, SignalConfig> = {
   duration: { weight: 0.20, min: 3_000, max: 180_000 },
-  entropy: { weight: 0.25, min: 0.5, max: 3.5 },
+  entropy: { weight: 0.20, min: 0.5, max: 3.5 },
   pasteRatio: { weight: 0.20, min: 0, max: 1 },
-  revisionRate: { weight: 0.20, min: 0, max: 10 },
+  revisionRate: { weight: 0.15, min: 0, max: 10 },
   eventDensity: { weight: 0.15, min: 0.5, max: 3.0 },
+  jitter: { weight: 0.10, min: 0.1, max: 1.5 },
 };
 
 /** Effort band thresholds */
@@ -72,6 +73,8 @@ export interface RawSignals {
   revisionRate: number;
   /** Event density: keydown events per second */
   eventDensity: number;
+  /** Jitter regularity: CV of per-window IKI variance (higher = more human-like) */
+  jitter: number;
 }
 
 /** Composite score result */

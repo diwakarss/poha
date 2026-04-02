@@ -39,6 +39,7 @@ export function computeScore(
     pasteRatio: 1.0 - normalizeLinear(raw.pasteRatio, config.pasteRatio.min, config.pasteRatio.max),
     revisionRate: normalizeLinear(raw.revisionRate, config.revisionRate.min, config.revisionRate.max),
     eventDensity: normalizeLinear(raw.eventDensity, config.eventDensity.min, config.eventDensity.max),
+    jitter: normalizeLinear(raw.jitter, config.jitter.min, config.jitter.max),
   };
 
   let score = 0;

@@ -14,6 +14,7 @@ describe("extractSignals", () => {
     expect(s.pasteRatio).toBe(0);
     expect(s.revisionRate).toBe(0);
     expect(s.eventDensity).toBe(0);
+    expect(s.jitter).toBe(0);
   });
 
   test("calculates duration from first to last event", () => {
