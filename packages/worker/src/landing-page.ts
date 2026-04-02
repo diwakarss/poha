@@ -560,6 +560,7 @@ export function renderLandingPage(): string {
     <p class="footer-text">Proof of Human Attention &middot; Open source &middot; <a href="https://x.com/1nimit">@1nimit</a></p>
     <div class="footer-links">
       <a href="https://github.com/diwakarss/poha">GitHub</a>
+      <a href="/privacy">Privacy</a>
     </div>
   </footer>
 

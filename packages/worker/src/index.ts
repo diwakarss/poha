@@ -4,6 +4,7 @@ import { generateShortId } from "./short-id.js";
 import { checkAndIncrementRateLimit } from "./rate-limit.js";
 import { renderVerifyPage, render404Page } from "./verify-page.js";
 import { renderLandingPage } from "./landing-page.js";
+import { renderPrivacyPage } from "./privacy-page.js";
 
 export { RateLimiterDO } from "./rate-limiter-do.js";
 
@@ -39,6 +40,16 @@ export default {
     if (request.method === "GET" && path === "/") {
       return new Response(renderLandingPage(), {
         headers: { "Content-Type": "text/html;charset=utf-8" },
+      });
+    }
+
+    // GET /privacy — privacy policy
+    if (request.method === "GET" && path === "/privacy") {
+      return new Response(renderPrivacyPage(), {
+        headers: {
+          "Content-Type": "text/html;charset=utf-8",
+          "Cache-Control": "public, max-age=86400",
+        },
       });
     }
 
