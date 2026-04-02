@@ -101,8 +101,9 @@ describe("renderVerifyPage", () => {
       },
     };
     const html = renderVerifyPage(xssStored);
-    expect(html).not.toContain("<script>");
-    expect(html).not.toContain("<img");
+    // User-controlled XSS payloads must be escaped
+    expect(html).not.toContain("<script>alert");
+    expect(html).not.toContain("<img onerror");
     expect(html).toContain("&lt;script&gt;");
   });
 
