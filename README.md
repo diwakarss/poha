@@ -17,6 +17,12 @@ PoHA measures your typing behavior — keystroke timing, pauses, revisions, past
 **Badge a message:** [web.poha.ink](https://web.poha.ink)
 **Verify a badge:** `poha.ink/{id}`
 
+## Coming soon
+
+- Chrome Extension
+- Android App
+- iOS App
+
 ## Packages
 
 | Package | What it does | License |
