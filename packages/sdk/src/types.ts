@@ -106,3 +106,47 @@ export interface Attestation {
   signer_pubkey: string;
   signature: string;
 }
+
+/** Valid text length buckets for calibration */
+export type TextLengthBucket = "0-50" | "50-100" | "100-500" | "500+";
+
+/** Anonymous calibration signals — no identity, no content, no timestamp */
+export interface CalibrationSignals {
+  input_method: string;
+  entropy: number;
+  duration_ms: number;
+  paste_ratio: number;
+  revision_rate: number;
+  event_density: number;
+  jitter: number;
+  text_length_bucket: TextLengthBucket;
+  locale: string;
+}
+
+/** Bucket a text length into privacy-preserving ranges */
+export function textLengthBucket(length: number): TextLengthBucket {
+  if (length < 50) return "0-50";
+  if (length < 100) return "50-100";
+  if (length < 500) return "100-500";
+  return "500+";
+}
+
+/** Build a calibration payload from raw signals */
+export function buildCalibrationPayload(
+  raw: RawSignals,
+  inputMethod: string,
+  textLength: number,
+  locale: string,
+): CalibrationSignals {
+  return {
+    input_method: inputMethod,
+    entropy: Math.round(raw.entropy * 100) / 100,
+    duration_ms: Math.round(raw.durationMs),
+    paste_ratio: Math.round(raw.pasteRatio * 1000) / 1000,
+    revision_rate: Math.round(raw.revisionRate * 10) / 10,
+    event_density: Math.round(raw.eventDensity * 10) / 10,
+    jitter: Math.round((raw.jitter ?? 0) * 1000) / 1000,
+    text_length_bucket: textLengthBucket(textLength),
+    locale,
+  };
+}

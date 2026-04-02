@@ -1,6 +1,6 @@
 {
   "name": "@poha/sdk",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Proof of Human Attention — signal engine, scoring, and attestation builder",
   "type": "module",
   "main": "dist/index.js",

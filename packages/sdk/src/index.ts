@@ -8,6 +8,8 @@ export type {
   ScoreResult,
   Signer,
   Attestation,
+  TextLengthBucket,
+  CalibrationSignals,
 } from "./types.js";
 
 export {
@@ -17,6 +19,8 @@ export {
   DEFAULT_SIGNAL_CONFIG,
   EFFORT_THRESHOLDS,
   BADGE_READY_THRESHOLD,
+  textLengthBucket,
+  buildCalibrationPayload,
 } from "./types.js";
 
 // Histogram
