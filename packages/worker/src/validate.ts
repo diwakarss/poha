@@ -105,7 +105,16 @@ export async function validateAttestation(att: Attestation): Promise<ValidationR
     return { valid: false, error: "final_text_length must be 0 to 100000" };
   }
 
-  // 10. Signature verification
+  // 10. Plausibility: text length vs duration
+  // 15 chars/sec is generous (world record ~12 chars/sec sustained)
+  if (att.composition_duration_ms > 0 && att.final_text_length > 0) {
+    const charsPerSec = att.final_text_length / (att.composition_duration_ms / 1000);
+    if (charsPerSec > 15) {
+      return { valid: false, error: "text length implausible for composition duration" };
+    }
+  }
+
+  // 11. Signature verification
   // Build the signing input: canonical JSON of attestation without the signature field
   const { signature, ...unsigned } = att;
   const signingInput = new TextEncoder().encode(canonicalJSON(unsigned as Record<string, unknown>));
