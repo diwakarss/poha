@@ -54,7 +54,7 @@ describe("computeScore", () => {
       jitter: 0.8,
     };
     const result = computeScore(raw);
-    // Hard gate: paste ratio > 0.5 caps score below badge threshold
+    // Hard gate: paste ratio > 0.7 caps score below badge threshold
     expect(result.score).toBeLessThan(0.3);
     expect(result.band).not.toBe("moderate");
     expect(result.band).not.toBe("high");
@@ -64,14 +64,28 @@ describe("computeScore", () => {
     const raw: RawSignals = {
       durationMs: 120_000,
       entropy: 3.0,
-      pasteRatio: 0.6,       // 60% pasted, 40% typed
+      pasteRatio: 0.8,       // 80% pasted, 20% typed
       revisionRate: 8,
       eventDensity: 2.5,
       jitter: 1.0,
     };
     const result = computeScore(raw);
-    // Hard gate at 0.5 paste ratio — cannot reach badge threshold
+    // Hard gate at 0.7 paste ratio — cannot reach badge threshold
     expect(result.score).toBeLessThan(0.3);
+  });
+
+  test("minority paste still allows badge", () => {
+    const raw: RawSignals = {
+      durationMs: 60_000,
+      entropy: 2.5,
+      pasteRatio: 0.3,       // 30% pasted (quoting), 70% typed
+      revisionRate: 4,
+      eventDensity: 2.0,
+      jitter: 0.8,
+    };
+    const result = computeScore(raw);
+    // Under the 0.7 gate — badge allowed
+    expect(result.score).toBeGreaterThan(0.3);
   });
 
   test("realistic human typing session", () => {

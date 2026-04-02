@@ -65,7 +65,7 @@ PoHA works differently depending on context. In B2B commerce, hiring, and profes
 
 | Attack | Cost | Effectiveness | Defense |
 |---|---|---|---|
-| Paste AI output | Zero | Caught immediately | Strong (paste_ratio = 1.0) |
+| Paste AI output | Zero | Caught immediately | Hard gate: paste ratio >70% blocks badge regardless of other signals |
 | Type out AI draft manually | 3–5 min/msg | Indistinguishable from genuine | None — philosophical boundary |
 | Keystroke replay scripts | Low | Moderate | Device attestation raises cost |
 | Macro tools with jitter | Low | Moderate | Calibration data improves detection |

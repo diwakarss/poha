@@ -47,8 +47,8 @@ export function computeScore(
     score += (normalized[key] ?? 0) * signalConfig.weight;
   }
 
-  // Hard gate: if more than half the content was pasted, cap score below badge threshold
-  if (raw.pasteRatio > 0.5) {
+  // Hard gate: if more than 70% of content was pasted, cap score below badge threshold
+  if (raw.pasteRatio > 0.7) {
     score = Math.min(score, EFFORT_THRESHOLDS.moderate - 0.01);
   }
 
