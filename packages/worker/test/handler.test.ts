@@ -47,7 +47,7 @@ describe("worker handler", () => {
   let env: Env;
 
   beforeEach(() => {
-    env = { ATTESTATIONS: createMockKV(), RATE_LIMITER: createMockRateLimiter() };
+    env = { ATTESTATIONS: createMockKV(), CALIBRATION: createMockKV(), RATE_LIMITER: createMockRateLimiter() };
   });
 
   // --- Routing ---
@@ -243,7 +243,7 @@ describe("worker handler", () => {
       list: async () => ({ keys: [], list_complete: true, cacheStatus: null }),
       getWithMetadata: async () => ({ value: null, metadata: null, cacheStatus: null }),
     } as unknown as KVNamespace;
-    const collisionEnv: Env = { ATTESTATIONS: alwaysCollideKV, RATE_LIMITER: env.RATE_LIMITER };
+    const collisionEnv: Env = { ATTESTATIONS: alwaysCollideKV, CALIBRATION: createMockKV(), RATE_LIMITER: env.RATE_LIMITER };
 
     const privKey = ed.utils.randomPrivateKey();
     const pubKey = await ed.getPublicKeyAsync(privKey);

@@ -8,6 +8,10 @@ binding = "ATTESTATIONS"
 id = "108924792498428f8100a58f4a59e16d"
 preview_id = "6dccdd9dc3984b8993dd1b630cb2230b"
 
+[[kv_namespaces]]
+binding = "CALIBRATION"
+id = "eb5e0bdca3314322932d115a8cd0dee4"
+
 [durable_objects]
 bindings = [
   { name = "RATE_LIMITER", class_name = "RateLimiterDO" }
@@ -16,4 +20,3 @@ bindings = [
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["RateLimiterDO"]
-

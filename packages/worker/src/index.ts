@@ -1,4 +1,4 @@
-import type { Env, Attestation, StoredAttestation } from "./types.js";
+import type { Env, Attestation, StoredAttestation, CalibrationSignals } from "./types.js";
 import { validateAttestation } from "./validate.js";
 import { generateShortId } from "./short-id.js";
 import { checkAndIncrementRateLimit } from "./rate-limit.js";
@@ -8,6 +8,7 @@ import { renderLandingPage } from "./landing-page.js";
 export { RateLimiterDO } from "./rate-limiter-do.js";
 
 const KV_TTL_SECONDS = 365 * 24 * 60 * 60; // 1 year
+const CALIBRATION_TTL_SECONDS = 90 * 24 * 60 * 60; // 90 days
 const MAX_COLLISION_RETRIES = 5;
 const SHORT_ID_PATTERN = /^\/([A-Za-z0-9]{5})$/;
 
@@ -25,7 +26,7 @@ export default {
 
     // POST /attest — submit an attestation
     if (request.method === "POST" && path === "/attest") {
-      return handleAttest(request, env);
+      return handleAttest(request, env, ctx);
     }
 
     // GET /api/:id — raw attestation JSON
@@ -51,8 +52,9 @@ export default {
   },
 };
 
-async function handleAttest(request: Request, env: Env): Promise<Response> {
+async function handleAttest(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
   let att: Attestation;
+  let calibration: CalibrationSignals | undefined;
   try {
     const body = await request.json();
     if (body === null || typeof body !== "object" || Array.isArray(body)) {
@@ -61,7 +63,11 @@ async function handleAttest(request: Request, env: Env): Promise<Response> {
         headers: corsHeaders(request),
       });
     }
-    att = body as Attestation;
+    const { calibration_signals, ...rest } = body as any;
+    att = rest as Attestation;
+    if (calibration_signals && typeof calibration_signals === "object" && !Array.isArray(calibration_signals)) {
+      calibration = calibration_signals as CalibrationSignals;
+    }
   } catch {
     return Response.json({ error: "invalid JSON body" }, {
       status: 400,
@@ -124,6 +130,10 @@ async function handleAttest(request: Request, env: Env): Promise<Response> {
     { expirationTtl: KV_TTL_SECONDS }
   );
 
+  if (calibration) {
+    ctx.waitUntil(storeCalibration(env, calibration));
+  }
+
   return Response.json({
     short_id: shortId,
     verify_url: `/${shortId}`,
@@ -171,6 +181,17 @@ async function handleApi(id: string, env: Env, request: Request): Promise<Respon
       "Cache-Control": "public, max-age=3600",
     },
   });
+}
+
+async function storeCalibration(env: Env, cal: CalibrationSignals): Promise<void> {
+  try {
+    const key = `cal:${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    await env.CALIBRATION.put(key, JSON.stringify(cal), {
+      expirationTtl: CALIBRATION_TTL_SECONDS,
+    });
+  } catch {
+    // Never fail attestation for calibration
+  }
 }
 
 async function trackReferrer(env: Env, id: string, request: Request): Promise<void> {
