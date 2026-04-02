@@ -14,14 +14,15 @@ PoHA measures your typing behavior — keystroke timing, pauses, revisions, past
 
 ## Try it
 
-**Badge a message:** [web.poha.ink](https://web.poha.ink)
+**Try it right now** → [web.poha.ink](https://web.poha.ink) (badge any message in <10 seconds)
+
 **Verify a badge:** `poha.ink/{id}`
 
 ## Coming soon
 
-- Chrome Extension
-- Android App
-- iOS App
+- Chrome Extension (May 2026)
+- Android keyboard app (June 2026)
+- iOS app (July 2026)
 
 ## Packages
 
