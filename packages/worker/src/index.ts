@@ -3,9 +3,6 @@ import { validateAttestation } from "./validate.js";
 import { generateShortId } from "./short-id.js";
 import { checkAndIncrementRateLimit } from "./rate-limit.js";
 import { renderVerifyPage, render404Page } from "./verify-page.js";
-import { renderLandingPage } from "./landing-page.js";
-import { renderPrivacyPage } from "./privacy-page.js";
-import { FAVICON, OG_IMAGE, APPLE_TOUCH_ICON } from "./static-assets.js";
 
 export { RateLimiterDO } from "./rate-limiter-do.js";
 
@@ -14,11 +11,14 @@ const CALIBRATION_TTL_SECONDS = 90 * 24 * 60 * 60; // 90 days
 const MAX_COLLISION_RETRIES = 5;
 const SHORT_ID_PATTERN = /^\/([A-Za-z0-9]{5})$/;
 
-const STATIC_ASSETS: Record<string, { data: string; type: string }> = {
-  "/favicon.png": { data: FAVICON, type: "image/png" },
-  "/favicon.ico": { data: FAVICON, type: "image/png" },
-  "/apple-touch-icon.png": { data: APPLE_TOUCH_ICON, type: "image/png" },
-  "/og-image.png": { data: OG_IMAGE, type: "image/png" },
+/** PAGES KV keys for content managed by poha-apps/landing-page */
+const PAGE_ROUTES: Record<string, { key: string; type: string; cache: string }> = {
+  "/":                     { key: "page:index",              type: "text/html;charset=utf-8", cache: "public, max-age=300" },
+  "/privacy":              { key: "page:privacy",            type: "text/html;charset=utf-8", cache: "public, max-age=86400" },
+  "/favicon.png":          { key: "asset:favicon.png",       type: "image/png",               cache: "public, max-age=604800, immutable" },
+  "/favicon.ico":          { key: "asset:favicon.png",       type: "image/png",               cache: "public, max-age=604800, immutable" },
+  "/apple-touch-icon.png": { key: "asset:apple-touch-icon.png", type: "image/png",            cache: "public, max-age=604800, immutable" },
+  "/og-image.png":         { key: "asset:og-image.png",      type: "image/png",               cache: "public, max-age=604800, immutable" },
 };
 
 export default {
@@ -44,34 +44,12 @@ export default {
       return handleApi(apiMatch[1], env, request);
     }
 
-    // Static assets
+    // Pages and static assets — served from PAGES KV (deployed by poha-apps/landing-page)
     if (request.method === "GET") {
-      const asset = STATIC_ASSETS[path];
-      if (asset) {
-        return new Response(Uint8Array.from(atob(asset.data), c => c.charCodeAt(0)), {
-          headers: {
-            "Content-Type": asset.type,
-            "Cache-Control": "public, max-age=604800, immutable",
-          },
-        });
+      const route = PAGE_ROUTES[path];
+      if (route) {
+        return servePage(env, route);
       }
-    }
-
-    // GET / — landing page
-    if (request.method === "GET" && path === "/") {
-      return new Response(renderLandingPage(), {
-        headers: { "Content-Type": "text/html;charset=utf-8" },
-      });
-    }
-
-    // GET /privacy — privacy policy
-    if (request.method === "GET" && path === "/privacy") {
-      return new Response(renderPrivacyPage(), {
-        headers: {
-          "Content-Type": "text/html;charset=utf-8",
-          "Cache-Control": "public, max-age=86400",
-        },
-      });
     }
 
     // GET /:id — verification page (5-char alphanumeric)
@@ -83,6 +61,22 @@ export default {
     return Response.json({ error: "not found" }, { status: 404 });
   },
 };
+
+async function servePage(
+  env: Env,
+  route: { key: string; type: string; cache: string },
+): Promise<Response> {
+  const value = await env.PAGES.get(route.key, route.type.startsWith("image/") ? "arrayBuffer" : "text");
+  if (!value) {
+    return new Response("Page not deployed yet.", { status: 404 });
+  }
+  return new Response(value as ArrayBuffer | string, {
+    headers: {
+      "Content-Type": route.type,
+      "Cache-Control": route.cache,
+    },
+  });
+}
 
 async function handleAttest(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
   let att: Attestation;

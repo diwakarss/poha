@@ -6,6 +6,7 @@ export type { Attestation };
 export interface Env {
   ATTESTATIONS: KVNamespace;
   CALIBRATION: KVNamespace;
+  PAGES: KVNamespace;
   RATE_LIMITER: DurableObjectNamespace;
 }
 

@@ -46,19 +46,29 @@ const mockCtx: ExecutionContext = {
 describe("worker handler", () => {
   let env: Env;
 
-  beforeEach(() => {
-    env = { ATTESTATIONS: createMockKV(), CALIBRATION: createMockKV(), RATE_LIMITER: createMockRateLimiter() };
+  beforeEach(async () => {
+    const pagesKV = createMockKV();
+    // Seed PAGES KV with landing page content for tests
+    await pagesKV.put("page:index", "<html><body>Proof of Human Attention — PROVE YOU</body></html>");
+    await pagesKV.put("page:privacy", "<html><body>Privacy Policy</body></html>");
+    env = { ATTESTATIONS: createMockKV(), CALIBRATION: createMockKV(), PAGES: pagesKV, RATE_LIMITER: createMockRateLimiter() };
   });
 
   // --- Routing ---
 
-  test("GET / returns landing page HTML", async () => {
+  test("GET / returns landing page from PAGES KV", async () => {
     const res = await worker.fetch(makeRequest("/"), env, mockCtx);
     expect(res.status).toBe(200);
     expect(res.headers.get("Content-Type")).toContain("text/html");
     const html = await res.text();
     expect(html).toContain("Proof of Human Attention");
     expect(html).toContain("PROVE YOU");
+  });
+
+  test("GET / returns 404 when PAGES KV is empty", async () => {
+    const emptyEnv: Env = { ...env, PAGES: createMockKV() };
+    const res = await worker.fetch(makeRequest("/"), emptyEnv, mockCtx);
+    expect(res.status).toBe(404);
   });
 
   test("unknown route returns 404", async () => {
@@ -243,7 +253,7 @@ describe("worker handler", () => {
       list: async () => ({ keys: [], list_complete: true, cacheStatus: null }),
       getWithMetadata: async () => ({ value: null, metadata: null, cacheStatus: null }),
     } as unknown as KVNamespace;
-    const collisionEnv: Env = { ATTESTATIONS: alwaysCollideKV, CALIBRATION: createMockKV(), RATE_LIMITER: env.RATE_LIMITER };
+    const collisionEnv: Env = { ATTESTATIONS: alwaysCollideKV, CALIBRATION: createMockKV(), PAGES: createMockKV(), RATE_LIMITER: env.RATE_LIMITER };
 
     const privKey = ed.utils.randomPrivateKey();
     const pubKey = await ed.getPublicKeyAsync(privKey);
