@@ -10,6 +10,8 @@ export function renderPrivacyPage(): string {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Privacy Policy \u2014 PoHA</title>
   <meta name="description" content="PoHA privacy policy. What we collect, what we don\u2019t, and how your data is handled.">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'none'">
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
   <meta http-equiv="X-Frame-Options" content="DENY">

@@ -14,9 +14,15 @@ export function renderLandingPage(): string {
   <meta property="og:description" content="People already think your messages are AI. Prove them wrong. Open source.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://poha.ink">
-  <meta name="twitter:card" content="summary">
+  <meta property="og:image" content="https://poha.ink/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="PoHA \u2014 Prove you typed it">
   <meta name="twitter:description" content="People already think your messages are AI. Prove them wrong.">
+  <meta name="twitter:image" content="https://poha.ink/og-image.png">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@700;800&family=Inter:wght@400;500;600&family=Material+Symbols+Outlined:opsz,wght,FILL@20..48,100..700,0..1&display=swap" rel="stylesheet">

@@ -5,6 +5,7 @@ import { checkAndIncrementRateLimit } from "./rate-limit.js";
 import { renderVerifyPage, render404Page } from "./verify-page.js";
 import { renderLandingPage } from "./landing-page.js";
 import { renderPrivacyPage } from "./privacy-page.js";
+import { FAVICON, OG_IMAGE, APPLE_TOUCH_ICON } from "./static-assets.js";
 
 export { RateLimiterDO } from "./rate-limiter-do.js";
 
@@ -12,6 +13,13 @@ const KV_TTL_SECONDS = 365 * 24 * 60 * 60; // 1 year
 const CALIBRATION_TTL_SECONDS = 90 * 24 * 60 * 60; // 90 days
 const MAX_COLLISION_RETRIES = 5;
 const SHORT_ID_PATTERN = /^\/([A-Za-z0-9]{5})$/;
+
+const STATIC_ASSETS: Record<string, { data: string; type: string }> = {
+  "/favicon.png": { data: FAVICON, type: "image/png" },
+  "/favicon.ico": { data: FAVICON, type: "image/png" },
+  "/apple-touch-icon.png": { data: APPLE_TOUCH_ICON, type: "image/png" },
+  "/og-image.png": { data: OG_IMAGE, type: "image/png" },
+};
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -34,6 +42,19 @@ export default {
     const apiMatch = path.match(/^\/api\/([A-Za-z0-9]{5})$/);
     if (request.method === "GET" && apiMatch) {
       return handleApi(apiMatch[1], env, request);
+    }
+
+    // Static assets
+    if (request.method === "GET") {
+      const asset = STATIC_ASSETS[path];
+      if (asset) {
+        return new Response(Uint8Array.from(atob(asset.data), c => c.charCodeAt(0)), {
+          headers: {
+            "Content-Type": asset.type,
+            "Cache-Control": "public, max-age=604800, immutable",
+          },
+        });
+      }
     }
 
     // GET / — landing page
