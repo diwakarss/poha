@@ -8,6 +8,8 @@ export interface Env {
   CALIBRATION: KVNamespace;
   PAGES: KVNamespace;
   RATE_LIMITER: DurableObjectNamespace;
+  GITHUB_CLIENT_ID: string;
+  GITHUB_CLIENT_SECRET: string;
 }
 
 /** Valid text length buckets for calibration */

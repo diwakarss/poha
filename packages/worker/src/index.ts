@@ -35,6 +35,14 @@ export default {
       });
     }
 
+    // OAuth proxy for Decap CMS GitHub auth
+    if (path === "/oauth/auth") {
+      return handleOAuthAuth(env);
+    }
+    if (path === "/oauth/callback") {
+      return handleOAuthCallback(url, env);
+    }
+
     // POST /attest — submit an attestation
     if (request.method === "POST" && path === "/attest") {
       return handleAttest(request, env, ctx);
@@ -68,6 +76,50 @@ export default {
     return Response.json({ error: "not found" }, { status: 404 });
   },
 };
+
+function handleOAuthAuth(env: Env): Response {
+  const params = new URLSearchParams({
+    client_id: env.GITHUB_CLIENT_ID,
+    redirect_uri: "https://poha.ink/oauth/callback",
+    scope: "repo,user",
+  });
+  return Response.redirect(`https://github.com/login/oauth/authorize?${params}`, 301);
+}
+
+async function handleOAuthCallback(url: URL, env: Env): Promise<Response> {
+  const code = url.searchParams.get("code");
+  if (!code) {
+    return new Response("Missing code parameter", { status: 400 });
+  }
+
+  const tokenRes = await fetch("https://github.com/login/oauth/access_token", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({
+      client_id: env.GITHUB_CLIENT_ID,
+      client_secret: env.GITHUB_CLIENT_SECRET,
+      code,
+    }),
+  });
+
+  const data = await tokenRes.json() as { access_token?: string; error?: string };
+  const token = data.access_token;
+  const error = data.error;
+
+  const content = token
+    ? `authorization:github:success:{"token":"${token}","provider":"github"}`
+    : `authorization:github:error:${error || "unknown error"}`;
+
+  return new Response(
+    `<!DOCTYPE html><html><body><script>
+(function(){window.opener.postMessage('${content}','*');window.close();})();
+</script></body></html>`,
+    { headers: { "Content-Type": "text/html;charset=utf-8" } },
+  );
+}
 
 const BLOG_MIME_TYPES: Record<string, string> = {
   ".html": "text/html;charset=utf-8",
