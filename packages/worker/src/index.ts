@@ -81,7 +81,7 @@ function handleOAuthAuth(env: Env): Response {
   const params = new URLSearchParams({
     client_id: env.GITHUB_CLIENT_ID,
     redirect_uri: "https://poha.ink/oauth/callback",
-    scope: "repo,user",
+    scope: "repo",
   });
   return Response.redirect(`https://github.com/login/oauth/authorize?${params}`, 301);
 }
