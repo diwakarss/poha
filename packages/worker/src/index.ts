@@ -88,6 +88,11 @@ async function serveBlog(env: Env, path: string): Promise<Response> {
   // /blog/feed.xml -> page:blog:feed.xml
   // /blog/admin/config.yml -> page:blog:admin/config.yml
 
+  // Redirect /blog/admin to /blog/admin/ so relative paths (config.yml) resolve correctly
+  if (path === "/blog/admin") {
+    return Response.redirect(new URL("/blog/admin/", "https://poha.ink").toString(), 301);
+  }
+
   let slug = path.replace(/^\/blog\/?/, "").replace(/\/$/, "");
   if (!slug) slug = "index";
 
