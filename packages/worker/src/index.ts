@@ -19,6 +19,8 @@ const PAGE_ROUTES: Record<string, { key: string; type: string; cache: string }> 
   "/favicon.ico":          { key: "asset:favicon.png",       type: "image/png",               cache: "public, max-age=604800, immutable" },
   "/apple-touch-icon.png": { key: "asset:apple-touch-icon.png", type: "image/png",            cache: "public, max-age=604800, immutable" },
   "/og-image.png":         { key: "asset:og-image.png",      type: "image/png",               cache: "public, max-age=604800, immutable" },
+  "/sitemap.xml":          { key: "page:sitemap",            type: "application/xml",         cache: "public, max-age=86400" },
+  "/robots.txt":           { key: "page:robots",             type: "text/plain",              cache: "public, max-age=86400" },
 };
 
 export default {
