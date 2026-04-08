@@ -1,6 +1,5 @@
 import { describe, expect, test } from "bun:test";
 import { renderVerifyPage, render404Page } from "../src/verify-page.js";
-import { renderLandingPage } from "../src/landing-page.js";
 import type { StoredAttestation } from "../src/types.js";
 
 describe("renderVerifyPage", () => {
@@ -101,8 +100,9 @@ describe("renderVerifyPage", () => {
       },
     };
     const html = renderVerifyPage(xssStored);
-    expect(html).not.toContain("<script>");
-    expect(html).not.toContain("<img");
+    // User-controlled XSS payloads must be escaped
+    expect(html).not.toContain("<script>alert");
+    expect(html).not.toContain("<img onerror");
     expect(html).toContain("&lt;script&gt;");
   });
 
@@ -139,22 +139,3 @@ describe("render404Page", () => {
   });
 });
 
-describe("renderLandingPage", () => {
-  test("renders valid HTML with branding", () => {
-    const html = renderLandingPage();
-    expect(html).toContain("<!DOCTYPE html>");
-    expect(html).toContain("Proof of Human Attention");
-    expect(html).toContain("PROVE YOU");
-  });
-
-  test("links to web.poha.ink", () => {
-    const html = renderLandingPage();
-    expect(html).toContain("web.poha.ink");
-  });
-
-  test("includes OG meta tags", () => {
-    const html = renderLandingPage();
-    expect(html).toContain("og:title");
-    expect(html).toContain("og:description");
-  });
-});

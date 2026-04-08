@@ -21,6 +21,7 @@ describe("computeScore", () => {
       pasteRatio: 0,
       revisionRate: 0,
       eventDensity: 0,
+      jitter: 0,
     };
     const result = computeScore(raw);
     // pasteRatio of 0 → inverted = 1.0, weighted at 0.20 = 0.20
@@ -36,6 +37,7 @@ describe("computeScore", () => {
       pasteRatio: 0,        // no paste → inverted = 1.0
       revisionRate: 15,     // above 10 max
       eventDensity: 5.0,    // above 3.0 max
+      jitter: 2.0,          // above 1.5 max
     };
     const result = computeScore(raw);
     expect(result.score).toBeCloseTo(1.0, 2);
@@ -49,10 +51,41 @@ describe("computeScore", () => {
       pasteRatio: 1.0,      // all paste → inverted = 0.0
       revisionRate: 5,
       eventDensity: 2.0,
+      jitter: 0.8,
     };
     const result = computeScore(raw);
-    // pasteRatio contributes 0. Other signals still contribute.
-    expect(result.score).toBeLessThan(0.8);
+    // Hard gate: paste ratio > 0.7 caps score below badge threshold
+    expect(result.score).toBeLessThan(0.3);
+    expect(result.band).not.toBe("moderate");
+    expect(result.band).not.toBe("high");
+  });
+
+  test("majority-paste blocks badge even with good other signals", () => {
+    const raw: RawSignals = {
+      durationMs: 120_000,
+      entropy: 3.0,
+      pasteRatio: 0.8,       // 80% pasted, 20% typed
+      revisionRate: 8,
+      eventDensity: 2.5,
+      jitter: 1.0,
+    };
+    const result = computeScore(raw);
+    // Hard gate at 0.7 paste ratio — cannot reach badge threshold
+    expect(result.score).toBeLessThan(0.3);
+  });
+
+  test("minority paste still allows badge", () => {
+    const raw: RawSignals = {
+      durationMs: 60_000,
+      entropy: 2.5,
+      pasteRatio: 0.3,       // 30% pasted (quoting), 70% typed
+      revisionRate: 4,
+      eventDensity: 2.0,
+      jitter: 0.8,
+    };
+    const result = computeScore(raw);
+    // Under the 0.7 gate — badge allowed
+    expect(result.score).toBeGreaterThan(0.3);
   });
 
   test("realistic human typing session", () => {
@@ -62,6 +95,7 @@ describe("computeScore", () => {
       pasteRatio: 0.05,     // 5% paste
       revisionRate: 4,      // some backspacing
       eventDensity: 2.0,    // moderate typing speed
+      jitter: 0.8,          // irregular jitter (human-like)
     };
     const result = computeScore(raw);
     expect(result.score).toBeGreaterThan(0.3);
@@ -85,6 +119,7 @@ describe("computeScore", () => {
       pasteRatio: 0,
       revisionRate: 100,
       eventDensity: 100,
+      jitter: 10,
     };
     const result = computeScore(raw);
     expect(result.score).toBeLessThanOrEqual(1.0);
@@ -98,14 +133,16 @@ describe("computeScore", () => {
       pasteRatio: 0.1,
       revisionRate: 5,
       eventDensity: 1.5,
+      jitter: 0.5,
     };
     // Config with max === min for duration (degenerate)
     const config = {
       duration: { weight: 0.25, min: 100, max: 100 },
-      entropy: { weight: 0.20, min: 0, max: 3.5 },
+      entropy: { weight: 0.15, min: 0, max: 3.5 },
       pasteRatio: { weight: 0.20, min: 0, max: 1 },
       revisionRate: { weight: 0.15, min: 0, max: 10 },
-      eventDensity: { weight: 0.20, min: 0, max: 3 },
+      eventDensity: { weight: 0.15, min: 0, max: 3 },
+      jitter: { weight: 0.10, min: 0.1, max: 1.5 },
     };
     const result = computeScore(raw, config);
     // Duration normalized to 0 (max <= min), so it contributes 0
@@ -121,6 +158,7 @@ describe("computeScore", () => {
       pasteRatio: 0.1,
       revisionRate: 5,
       eventDensity: 1.5,
+      jitter: 0.8,
     };
     const result = computeScore(raw);
     expect(result.signals.duration).toBeGreaterThan(0);
@@ -128,5 +166,6 @@ describe("computeScore", () => {
     expect(result.signals.pasteRatio).toBeGreaterThan(0);
     expect(result.signals.revisionRate).toBeGreaterThan(0);
     expect(result.signals.eventDensity).toBeGreaterThan(0);
+    expect(result.signals.jitter).toBeGreaterThan(0);
   });
 });

@@ -1,6 +1,7 @@
 {
   "name": "@poha/sdk",
-  "version": "0.1.0",
+  "version": "1.0.1",
+  "description": "Proof of Human Attention — signal engine, scoring, and attestation builder",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -10,11 +11,24 @@
       "types": "./dist/index.d.ts"
     }
   },
+  "files": [
+    "dist",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsc",
+    "prepublishOnly": "tsc",
     "test": "bun test",
     "test:watch": "bun test --watch"
   },
+  "keywords": ["poha", "human-attention", "typing", "attestation", "badge"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/diwakarss/poha.git",
+    "directory": "packages/sdk"
+  },
+  "homepage": "https://poha.ink",
   "devDependencies": {
     "@types/bun": "^1.2.0",
     "typescript": "^5.7.0"

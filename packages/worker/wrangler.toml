@@ -1,11 +1,20 @@
 name = "poha-worker"
 main = "src/index.ts"
 compatibility_date = "2025-04-01"
+account_id = "b3cca244b478c41574e09cb0adef1a60"
 
 [[kv_namespaces]]
 binding = "ATTESTATIONS"
-id = "placeholder-prod-id"
-preview_id = "placeholder-preview-id"
+id = "108924792498428f8100a58f4a59e16d"
+preview_id = "6dccdd9dc3984b8993dd1b630cb2230b"
+
+[[kv_namespaces]]
+binding = "CALIBRATION"
+id = "eb5e0bdca3314322932d115a8cd0dee4"
+
+[[kv_namespaces]]
+binding = "PAGES"
+id = "0e993ef71712451c8ab53cb2c8a042a1"
 
 [durable_objects]
 bindings = [
@@ -14,4 +23,4 @@ bindings = [
 
 [[migrations]]
 tag = "v1"
-new_classes = ["RateLimiterDO"]
+new_sqlite_classes = ["RateLimiterDO"]

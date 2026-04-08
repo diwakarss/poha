@@ -35,7 +35,12 @@ export function renderVerifyPage(stored: StoredAttestation): string {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Typed by hand &ndash; PoHA ${escapeHtml(stored.short_id)}</title>
   <meta name="description" content="This message was composed through direct keyboard interaction. Verified by PoHA.">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline' https://api.fontshare.com; font-src https://cdn.fontshare.com; img-src 'none'; script-src 'none'">
+  <meta property="og:title" content="Typed by hand \u2013 PoHA ${escapeHtml(stored.short_id)}">
+  <meta property="og:description" content="This message was composed through direct keyboard interaction. Verified by PoHA.">
+  <meta property="og:image" content="https://poha.ink/og-image.png">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline' https://api.fontshare.com; font-src https://cdn.fontshare.com; img-src 'none'; script-src 'unsafe-inline'">
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
   <meta http-equiv="X-Frame-Options" content="DENY">
   <link rel="preconnect" href="https://api.fontshare.com">
@@ -233,7 +238,7 @@ export function renderVerifyPage(stored: StoredAttestation): string {
         <div class="verify-stat-label">Length</div>
       </div>
       <div class="verify-stat">
-        <div class="verify-stat-value">${escapeHtml(formattedDate)}, ${escapeHtml(formattedHour)}</div>
+        <div class="verify-stat-value" id="ts" data-utc="${escapeHtml(att.timestamp_hour)}">${escapeHtml(formattedDate)}, ${escapeHtml(formattedHour)} UTC</div>
         <div class="verify-stat-label">Timestamp</div>
       </div>
     </div>
@@ -263,6 +268,14 @@ export function renderVerifyPage(stored: StoredAttestation): string {
       Proof of Human Attention v${escapeHtml(att.poha_version)}
     </div>
   </div>
+  <script>
+    try {
+      var el = document.getElementById('ts');
+      var d = new Date(el.dataset.utc);
+      el.textContent = d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+        + ', ' + d.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true });
+    } catch(e) {}
+  </script>
 </body>
 </html>`;
 }

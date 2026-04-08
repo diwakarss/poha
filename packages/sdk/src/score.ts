@@ -39,11 +39,17 @@ export function computeScore(
     pasteRatio: 1.0 - normalizeLinear(raw.pasteRatio, config.pasteRatio.min, config.pasteRatio.max),
     revisionRate: normalizeLinear(raw.revisionRate, config.revisionRate.min, config.revisionRate.max),
     eventDensity: normalizeLinear(raw.eventDensity, config.eventDensity.min, config.eventDensity.max),
+    jitter: normalizeLinear(raw.jitter, config.jitter.min, config.jitter.max),
   };
 
   let score = 0;
   for (const [key, signalConfig] of Object.entries(config)) {
     score += (normalized[key] ?? 0) * signalConfig.weight;
+  }
+
+  // Hard gate: if more than 70% of content was pasted, cap score below badge threshold
+  if (raw.pasteRatio > 0.7) {
+    score = Math.min(score, EFFORT_THRESHOLDS.moderate - 0.01);
   }
 
   // Clamp to [0, 1] for safety

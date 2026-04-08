@@ -43,10 +43,11 @@ export interface SignalConfig {
 /** Default v1 signal weights and normalization ranges */
 export const DEFAULT_SIGNAL_CONFIG: Record<string, SignalConfig> = {
   duration: { weight: 0.20, min: 3_000, max: 180_000 },
-  entropy: { weight: 0.25, min: 0.5, max: 3.5 },
+  entropy: { weight: 0.20, min: 0.5, max: 3.5 },
   pasteRatio: { weight: 0.20, min: 0, max: 1 },
-  revisionRate: { weight: 0.20, min: 0, max: 10 },
+  revisionRate: { weight: 0.15, min: 0, max: 10 },
   eventDensity: { weight: 0.15, min: 0.5, max: 3.0 },
+  jitter: { weight: 0.10, min: 0.1, max: 1.5 },
 };
 
 /** Effort band thresholds */
@@ -72,6 +73,8 @@ export interface RawSignals {
   revisionRate: number;
   /** Event density: keydown events per second */
   eventDensity: number;
+  /** Jitter regularity: CV of per-window IKI variance (higher = more human-like) */
+  jitter: number;
 }
 
 /** Composite score result */
@@ -102,4 +105,48 @@ export interface Attestation {
   timestamp_hour: string;
   signer_pubkey: string;
   signature: string;
+}
+
+/** Valid text length buckets for calibration */
+export type TextLengthBucket = "0-50" | "50-100" | "100-500" | "500+";
+
+/** Anonymous calibration signals — no identity, no content, no timestamp */
+export interface CalibrationSignals {
+  input_method: string;
+  entropy: number;
+  duration_ms: number;
+  paste_ratio: number;
+  revision_rate: number;
+  event_density: number;
+  jitter: number;
+  text_length_bucket: TextLengthBucket;
+  locale: string;
+}
+
+/** Bucket a text length into privacy-preserving ranges */
+export function textLengthBucket(length: number): TextLengthBucket {
+  if (length < 50) return "0-50";
+  if (length < 100) return "50-100";
+  if (length < 500) return "100-500";
+  return "500+";
+}
+
+/** Build a calibration payload from raw signals */
+export function buildCalibrationPayload(
+  raw: RawSignals,
+  inputMethod: string,
+  textLength: number,
+  locale: string,
+): CalibrationSignals {
+  return {
+    input_method: inputMethod,
+    entropy: Math.round(raw.entropy * 100) / 100,
+    duration_ms: Math.round(raw.durationMs),
+    paste_ratio: Math.round(raw.pasteRatio * 1000) / 1000,
+    revision_rate: Math.round(raw.revisionRate * 10) / 10,
+    event_density: Math.round(raw.eventDensity * 10) / 10,
+    jitter: Math.round((raw.jitter ?? 0) * 1000) / 1000,
+    text_length_bucket: textLengthBucket(textLength),
+    locale,
+  };
 }
