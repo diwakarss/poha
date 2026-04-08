@@ -115,7 +115,14 @@ async function handleOAuthCallback(url: URL, env: Env): Promise<Response> {
 
   return new Response(
     `<!DOCTYPE html><html><body><script>
-(function(){window.opener.postMessage('${content}','*');window.close();})();
+(function(){
+  var content = '${content}';
+  // Notify opener we're authorizing, then wait for it to reply before sending token
+  window.opener.postMessage('authorizing:github', '*');
+  window.addEventListener('message', function(e) {
+    window.opener.postMessage(content, e.origin);
+  }, {once: true});
+})();
 </script></body></html>`,
     { headers: { "Content-Type": "text/html;charset=utf-8" } },
   );
